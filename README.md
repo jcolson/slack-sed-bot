@@ -7,3 +7,5 @@
 ## Known issues
 
 * Does not work with edited messages
+* Does not recognize new users until restart
+* Isn't too context-aware, use delimiters other than `/` so you don't have to use escape sequences
