@@ -8,7 +8,7 @@ if (process.argv.length < 3) {
 
 var token = process.argv[2];
 
-if (!/^\w+-\w+-\w+$/.test(token)) {
+if (!/^\w+-\w+-\w+-\w+$/.test(token)) {
     console.log('Token format is invalid.');
     process.exit(1);
 }
@@ -16,7 +16,8 @@ if (!/^\w+-\w+-\w+$/.test(token)) {
 var history = {};
 var keepHistory = 20;
 // 1 is delimiter; 2 is "search"; 3 is "replace", 4 are flags (or undefined).
-var sedRegex = /(?:^|\s)s([^\w\s])(.+)\1(.+)\1([a-z])*/;
+//var sedRegex = /(?:^|\s)s([^\w\s])(.+)\1(.+)\1([a-z])*/;
+var sedRegex = /(?:^|\s)s([^\w\s])(.+)\1(.+)/;
 var userMap = {};
 
 https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=true&no_unreads=true', function (res) {
@@ -65,6 +66,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
             try {
                 var matcher = new RegExp(sedMatch[2], sedMatch[4]);
             } catch (e) {
+		console.log("not a valid regex: "+sedMatch[2]+" "+sedMatch[4]);
                 // Not a valid regular expression.
                 return;
             }
