@@ -1,5 +1,12 @@
 {
+  "name": "slack-sed-bot",
+  "version": "1.0.1",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jcolson/slack-sed-bot.git"
+  },
   "dependencies": {
-    "ws": "^0.8.0"
+    "ws": "^6.1.3"
   }
 }
