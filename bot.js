@@ -72,27 +72,30 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         // Not a valid regular expression.
         return;
       }
-
+      try {
       // This is a sed replace command, look for target message from the history in reverse.
-      for (var i = history[messageData.channel].length - 1; i >= 0; i--) {
-        if (matcher.test(history[messageData.channel][i].text)) {
+        for (var i = history[messageData.channel].length - 1; i >= 0; i--) {
+          if (matcher.test(history[messageData.channel][i].text)) {
           // Matching message found, send the replacement and exit.
 
-          // Fallback user, in case someone new joined. Not handled ATM.
-          var sender = 'Unknown user (Welcome!)';
-          try {
-            sender = userMap[history[messageData.channel][i].user].real_name;
-          } catch (e) {
+            // Fallback user, in case someone new joined. Not handled ATM.
+            var sender = 'Unknown user (Welcome!)';
+            try {
+              sender = userMap[history[messageData.channel][i].user].real_name;
+            } catch (e) {
+            }
+            var newText = '*' + sender + ':*\n' + history[messageData.channel][i].text.replace(matcher, sedMatch[3]);
+            var sendData = {
+              type: 'message',
+              channel: messageData.channel,
+              text: newText,
+            };
+            wsc.send(JSON.stringify(sendData));
+            return;
           }
-          var newText = '*' + sender + ':*\n' + history[messageData.channel][i].text.replace(matcher, sedMatch[3]);
-          var sendData = {
-            type: 'message',
-            channel: messageData.channel,
-            text: newText,
-          };
-          wsc.send(JSON.stringify(sendData));
-          return;
         }
+      } catch (e) {
+        console.error(e);
       }
     });
   });
