@@ -74,6 +74,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
       }
       try {
       // This is a sed replace command, look for target message from the history in reverse.
+        if (typeof history[messageData.channel] !== undefined) {
         for (var i = history[messageData.channel].length - 1; i >= 0; i--) {
           if (matcher.test(history[messageData.channel][i].text)) {
           // Matching message found, send the replacement and exit.
@@ -94,6 +95,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
             return;
           }
         }
+	}
       } catch (e) {
         console.error(e);
       }
