@@ -1,12 +1,18 @@
 {
   "name": "slack-sed-bot",
   "version": "1.0.1",
+  "description": "A sed bot for slack",
   "private": true,
   "repository": {
     "type": "git",
     "url": "git@github.com:jcolson/slack-sed-bot.git"
   },
+  "scripts": {
+    "pretest": "eslint --ignore-path .gitignore .",
+    "test": "testfn() { patt=${@:-test_}; find tests -name \"*${patt}*\" | xargs -n1 node | awk -f bin/filter-tape.awk; }; testfn"
+  },
   "dependencies": {
-    "ws": "^6.1.3"
+    "ws": "^6.1.3",
+    "tape": "^4.9.2"
   }
 }
