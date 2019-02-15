@@ -19,8 +19,9 @@ var history = {};
 var keepHistory = 20;
 // 1 is delimiter; 2 is "search"; 3 is "replace", 4 are flags (or undefined).
 // var sedRegex = /(?:^|\s)s([^\w\s])(.+)\1(.+)\1([a-z])*/;
-var sedRegex = /(?:^|\s)s([^\w\s])(.+)\1(.+)/;
+var sedRegex = /(?:^|\s)s([^\w\s])([\-\(\)\*\[\]\s\w]+)\1([\-\(\)\*\[\]\s\w]+)\1?([\-\(\)\*\[\]\w]+)*/;
 var userMap = {};
+var userMapByName = {};
 
 https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=true&no_unreads=true', function(res) {
   var body = '';
@@ -35,6 +36,8 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
     }
     data.users.map(function(user) {
       userMap[user.id] = user;
+      userMapByName[user.name] = user;
+      // console.log(JSON.stringify(user));
     });
     var wsUrl = data.url;
     var wsc = new Ws(wsUrl);
@@ -48,6 +51,36 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
       if (typeof messageData.text !== 'string') {
         // This is probably a message edit - ignore those completely.
         return;
+      }
+
+      var commands = ['HELP', 'ECHO'];
+      var sedId = '<@' + userMapByName['sed'].id + '> ';
+      var commandMatch = null;
+      if (messageData.text.startsWith(sedId)) {
+        var possibleCommand = messageData.text.substring(sedId.length).toUpperCase();
+        if (commands.includes(possibleCommand)) {
+          commandMatch = possibleCommand;
+        }
+      }
+      // console.log('commandMatch = "' + commandMatch + '"');
+      if (commandMatch !== null) {
+        var commandText = '?';
+        // console.log('matched a command: ' + commandMatch);
+        if (commandMatch === 'HELP') {
+          commandText = 'You askin\' for help with sed??\n';
+          commandText += 'Just use something simple like:\n';
+          commandText += '`s/text to replace/text replaced with`\n';
+          commandText += 'or\n';
+          commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
+        } else if (commandMatch === 'ECHO') {
+          commandText = 'ECHO WUT\n';
+        }
+        var sendCommandData = {
+          type: 'message',
+          channel: messageData.channel,
+          text: commandText,
+        };
+        wsc.send(JSON.stringify(sendCommandData));
       }
 
       var sedMatch = messageData.text.match(sedRegex);
