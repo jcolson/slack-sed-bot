@@ -63,9 +63,9 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         }
       }
       if (messageData.text.startsWith('sed ')) {
-        var possibleCommand = messageData.text.substring('sed '.length).toUpperCase();
-        if (commands.includes(possibleCommand)) {
-          commandMatch = possibleCommand;
+        var possCommand = messageData.text.substring('sed '.length).toUpperCase();
+        if (commands.includes(possCommand)) {
+          commandMatch = possCommand;
         }
       }
       // console.log('commandMatch = "' + commandMatch + '"');
