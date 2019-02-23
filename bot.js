@@ -133,7 +133,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
                 sender = userMap[history[messageData.channel][i].user].real_name;
               } catch (e) {
               }
-              var newText = 'What *' + sender + '* meant to say...\n' + history[messageData.channel][i].text.replace(matcher, ' *' + sedMatch[3] + '* ');
+              var newText = 'Correction, *' + sender + '* ...\n' + history[messageData.channel][i].text.replace(matcher, ' *' + sedMatch[3] + '* ');
               var sendData = {
                 type: 'message',
                 channel: messageData.channel,
