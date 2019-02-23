@@ -1,5 +1,6 @@
 'use strict';
 
+const os = require('os');
 var https = require('https');
 var Ws = require('ws');
 
@@ -53,7 +54,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         return;
       }
 
-      var commands = ['HELP', 'ECHO'];
+      var commands = ['HELP', 'PING', 'ABOUT'];
       var sedId = '<@' + userMapByName['sed'].id + '> ';
       var commandMatch = null;
       if (messageData.text.startsWith(sedId)) {
@@ -73,13 +74,21 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         var commandText = '?';
         // console.log('matched a command: ' + commandMatch);
         if (commandMatch === 'HELP') {
-          commandText = 'You askin\' for help with sed??\n';
-          commandText += 'Just use something simple like:\n';
+          commandText = 'Just use something simple like:\n';
           commandText += '`s/text to replace/text replaced with`\n';
           commandText += 'or\n';
           commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
-        } else if (commandMatch === 'ECHO') {
-          commandText = 'ECHO WUT\n';
+          commandText += 'or try a command:\n';
+          commandText += '`sed help`  - this help\n';
+          commandText += '`sed about` - get information about bot\n';
+          commandText += '`sed ping`  - ping the bot\n';
+        } else if (commandMatch === 'PING') {
+          commandText = 'PONG\n';
+        } else if (commandMatch === 'ABOUT') {
+          commandText = 'OS: ' + os.platform + ' / ' + os.release + '\n';
+          commandText += 'Host: ' + os.hostname + '\n';
+          commandText += 'Uptime: ' + (os.uptime / 60 / 60 / 24).toFixed(2) + ' days\n';
+          commandText += 'Load: ' + os.loadavg[0] + ' / ' +  os.loadavg[1] + ' / ' + os.loadavg[2] + '\n';
         }
         var sendCommandData = {
           type: 'message',
@@ -124,7 +133,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
                 sender = userMap[history[messageData.channel][i].user].real_name;
               } catch (e) {
               }
-              var newText = 'What *' + sender + '* meant to say...\n' + history[messageData.channel][i].text.replace(matcher, '*' + sedMatch[3] + '*');
+              var newText = 'What *' + sender + '* meant to say...\n' + history[messageData.channel][i].text.replace(matcher, ' *' + sedMatch[3] + '* ');
               var sendData = {
                 type: 'message',
                 channel: messageData.channel,
