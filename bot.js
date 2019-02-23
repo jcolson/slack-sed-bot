@@ -85,10 +85,10 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         } else if (commandMatch === 'PING') {
           commandText = 'PONG\n';
         } else if (commandMatch === 'ABOUT') {
-          commandText = 'OS: ' + os.platform + ' / ' + os.release + '\n';
-          commandText += 'Host: ' + os.hostname + '\n';
-          commandText += 'Uptime: ' + (os.uptime / 60 / 60 / 24).toFixed(2) + ' days\n';
-          commandText += 'Load: ' + os.loadavg[0] + ' / ' +  os.loadavg[1] + ' / ' + os.loadavg[2] + '\n';
+          commandText = 'OS: ' + os.platform() + ' / ' + os.release() + '\n';
+          commandText += 'Host: ' + os.hostname() + '\n';
+          commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
+          commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
         }
         var sendCommandData = {
           type: 'message',
