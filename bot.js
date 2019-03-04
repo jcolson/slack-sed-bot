@@ -69,17 +69,17 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
       if (substringTo === -1) {
         substringTo = messageData.text.length;
       } else {
-        substringTo = substringTo+substringFrom;
+        substringTo = substringTo + substringFrom;
       }
       // console.log('substringTo: '+substringTo);
       let possibleCommand = messageData.text.substring(substringFrom, substringTo).toUpperCase();
       if (commands.includes(possibleCommand)) {
         commandMatch = possibleCommand;
-        parameters = messageData.text.substring(substringTo+1);
+        parameters = messageData.text.substring(substringTo + 1);
       }
       // console.log('commandmatch: '+commandMatch);
       // console.log('parameters: '+parameters);
-      
+
       // console.log('commandMatch = "' + commandMatch + '"');
       if (commandMatch !== null) {
         let commandText = '';
@@ -106,10 +106,10 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
             protocol: 'https:',
             host: 'wttr.in',
             port: '443',
-            path: '/'+parameters+'?format=3',
+            path: '/' + parameters + '?format=3',
             headers: {
-              'Accept': 'text/plain',
-              'User-Agent': 'like curl'
+              Accept: 'text/plain',
+              'User-Agent': 'like curl',
             },
           };
           https.get(options, (response) => {
@@ -132,7 +132,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
               wsc.send(JSON.stringify(sendCommandData));
             });
           }).on('error', (e) => {
-            console.error('received error: '+e.message);
+            console.error('received error: ' + e.message);
           });
         }
         if (commandText !== '') {
