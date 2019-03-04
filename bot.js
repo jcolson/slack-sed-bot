@@ -54,24 +54,35 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         return;
       }
 
-      var commands = ['HELP', 'PING', 'ABOUT'];
-      var sedId = '<@' + userMapByName['sed'].id + '> ';
-      var commandMatch = null;
+      let commands = ['HELP', 'PING', 'ABOUT', 'WEATHER'];
+      let sedId = '<@' + userMapByName['sed'].id + '> ';
+      let commandMatch = null;
+      let parameters = null;
+      let substringFrom = -1;
       if (messageData.text.startsWith(sedId)) {
-        var possibleCommand = messageData.text.substring(sedId.length).toUpperCase();
-        if (commands.includes(possibleCommand)) {
-          commandMatch = possibleCommand;
-        }
+        substringFrom = sedId.length;
+      } else if (messageData.text.startsWith('sed ')) {
+        substringFrom = 'sed '.length;
       }
-      if (messageData.text.startsWith('sed ')) {
-        var possCommand = messageData.text.substring('sed '.length).toUpperCase();
-        if (commands.includes(possCommand)) {
-          commandMatch = possCommand;
-        }
+      // console.log('substringFrom: '+substringFrom);
+      let substringTo = messageData.text.substring(substringFrom).indexOf(' ');
+      if (substringTo === -1) {
+        substringTo = messageData.text.length;
+      } else {
+        substringTo = substringTo+substringFrom;
       }
+      // console.log('substringTo: '+substringTo);
+      let possibleCommand = messageData.text.substring(substringFrom, substringTo).toUpperCase();
+      if (commands.includes(possibleCommand)) {
+        commandMatch = possibleCommand;
+        parameters = messageData.text.substring(substringTo+1);
+      }
+      // console.log('commandmatch: '+commandMatch);
+      // console.log('parameters: '+parameters);
+      
       // console.log('commandMatch = "' + commandMatch + '"');
       if (commandMatch !== null) {
-        var commandText = '?';
+        let commandText = '';
         // console.log('matched a command: ' + commandMatch);
         if (commandMatch === 'HELP') {
           commandText = 'Just use something simple like:\n';
@@ -79,9 +90,10 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
           commandText += 'or\n';
           commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
           commandText += 'or try a command:\n';
-          commandText += '`sed help`  - this help\n';
-          commandText += '`sed about` - get information about bot\n';
-          commandText += '`sed ping`  - ping the bot\n';
+          commandText += '`sed help`                - this help\n';
+          commandText += '`sed weather [location]`  - get the current weather for [location]\n';
+          commandText += '`sed about`               - get information about bot\n';
+          commandText += '`sed ping`                - ping the bot\n';
         } else if (commandMatch === 'PING') {
           commandText = 'PONG\n';
         } else if (commandMatch === 'ABOUT') {
@@ -89,13 +101,48 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
           commandText += 'Host: ' + os.hostname() + '\n';
           commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
           commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
+        } else if (commandMatch === 'WEATHER') {
+          let options = {
+            protocol: 'https:',
+            host: 'wttr.in',
+            port: '443',
+            path: '/'+parameters+'?format=3',
+            headers: {
+              'Accept': 'text/plain',
+              'User-Agent': 'like curl'
+            },
+          };
+          https.get(options, (response) => {
+            // console.log('statusCode:', response.statusCode);
+            // console.log('headers:', response.headers);
+            let body = '';
+            response.on('data', (data) => {
+              body += data;
+            });
+            response.on('end', function() {
+              // console.log(body);
+              if (body.indexOf('Error') !== -1) {
+                body = 'Error encountered, try a different location';
+              }
+              let sendCommandData = {
+                type: 'message',
+                channel: messageData.channel,
+                text: body,
+              };
+              wsc.send(JSON.stringify(sendCommandData));
+            });
+          }).on('error', (e) => {
+            console.error('received error: '+e.message);
+          });
         }
-        var sendCommandData = {
-          type: 'message',
-          channel: messageData.channel,
-          text: commandText,
-        };
-        wsc.send(JSON.stringify(sendCommandData));
+        if (commandText !== '') {
+          let sendCommandData = {
+            type: 'message',
+            channel: messageData.channel,
+            text: commandText,
+          };
+          wsc.send(JSON.stringify(sendCommandData));
+        }
       }
 
       var sedMatch = messageData.text.match(sedRegex);
