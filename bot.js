@@ -94,7 +94,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
           commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
           commandText += 'or try a command:\n';
           commandText += '`.help`                - this help\n';
-          commandText += '`.wtr [location]`      - get the current weather for [location]\n';
+          commandText += '`.wtr [location]?[m/u]`- get the current weather for [location]. [m] == metric, [u] == USCS\n';
           commandText += '`.about`               - get information about bot\n';
           commandText += '`.ping`                - ping the bot\n';
         } else if (commandMatch === 'PING') {
@@ -105,11 +105,17 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
           commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
           commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
         } else if (commandMatch === 'WTR') {
+          let format = 'format=4';
+          if (parameters.indexOf('?') === -1) {
+            format = '?' + format;
+          } else {
+            format = '&' + format;
+          }
           let options = {
             protocol: 'https:',
             host: 'wttr.in',
             port: '443',
-            path: encodeURI('/' + parameters + '?format=4'),
+            path: encodeURI('/' + parameters + format),
             headers: {
               Accept: 'text/plain',
               'User-Agent': 'like curl',
