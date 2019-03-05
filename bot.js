@@ -54,7 +54,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         return;
       }
 
-      let commands = ['HELP', 'PING', 'ABOUT', 'WEATHER'];
+      let commands = ['HELP', 'PING', 'ABOUT', 'WTR'];
       let sedId = '<@' + userMapByName['sed'].id + '> ';
       let commandMatch = null;
       let parameters = null;
@@ -63,23 +63,26 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
         substringFrom = sedId.length;
       } else if (messageData.text.startsWith('sed ')) {
         substringFrom = 'sed '.length;
+      } else if (messageData.text.startsWith('.')) {
+        substringFrom = '.'.length;
       }
       // console.log('substringFrom: '+substringFrom);
       let substringTo = messageData.text.substring(substringFrom).indexOf(' ');
       if (substringTo === -1) {
         substringTo = messageData.text.length;
       } else {
-        substringTo = substringTo+substringFrom;
+        substringTo = substringTo + substringFrom;
       }
-      // console.log('substringTo: '+substringTo);
+      // console.log('substringTo: ' + substringTo);
       let possibleCommand = messageData.text.substring(substringFrom, substringTo).toUpperCase();
+      // console.log('possibleCommand: ' + possibleCommand);
       if (commands.includes(possibleCommand)) {
         commandMatch = possibleCommand;
-        parameters = messageData.text.substring(substringTo+1);
+        parameters = messageData.text.substring(substringTo + 1);
       }
       // console.log('commandmatch: '+commandMatch);
       // console.log('parameters: '+parameters);
-      
+
       // console.log('commandMatch = "' + commandMatch + '"');
       if (commandMatch !== null) {
         let commandText = '';
@@ -90,10 +93,10 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
           commandText += 'or\n';
           commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
           commandText += 'or try a command:\n';
-          commandText += '`sed help`                - this help\n';
-          commandText += '`sed weather [location]`  - get the current weather for [location]\n';
-          commandText += '`sed about`               - get information about bot\n';
-          commandText += '`sed ping`                - ping the bot\n';
+          commandText += '`.help`                - this help\n';
+          commandText += '`.wtr [location]`      - get the current weather for [location]\n';
+          commandText += '`.about`               - get information about bot\n';
+          commandText += '`.ping`                - ping the bot\n';
         } else if (commandMatch === 'PING') {
           commandText = 'PONG\n';
         } else if (commandMatch === 'ABOUT') {
@@ -101,15 +104,15 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
           commandText += 'Host: ' + os.hostname() + '\n';
           commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
           commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
-        } else if (commandMatch === 'WEATHER') {
+        } else if (commandMatch === 'WTR') {
           let options = {
             protocol: 'https:',
             host: 'wttr.in',
             port: '443',
-            path: '/'+parameters+'?format=3',
+            path: encodeURI('/' + parameters + '?format=4'),
             headers: {
-              'Accept': 'text/plain',
-              'User-Agent': 'like curl'
+              Accept: 'text/plain',
+              'User-Agent': 'like curl',
             },
           };
           https.get(options, (response) => {
@@ -132,7 +135,7 @@ https.get('https://slack.com/api/rtm.start?token=' + token + '&simple_latest=tru
               wsc.send(JSON.stringify(sendCommandData));
             });
           }).on('error', (e) => {
-            console.error('received error: '+e.message);
+            console.error('received error: ' + e.message);
           });
         }
         if (commandText !== '') {
