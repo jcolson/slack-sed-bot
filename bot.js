@@ -3,13 +3,11 @@
 const os = require('os');
 var https = require('https');
 var Ws = require('ws');
+const dotenv = require('dotenv');
 
-if (process.argv.length < 3) {
-  console.log('You must pass Slack API bot token as an argument.');
-  process.exit(1);
-}
-
-var token = process.argv[2];
+dotenv.config();
+var token = process.env.TOKEN;
+console.log(`Your token is ${token}`);
 
 if (!/^\w+-\w+-\w+-\w+$/.test(token)) {
   console.log('Token format is invalid.');

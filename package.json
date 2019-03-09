@@ -12,6 +12,7 @@
     "test": "testfn() { patt=${@:-test_}; find tests -name \"*${patt}*\" | xargs -n1 node | awk -f bin/filter-tape.awk; }; testfn"
   },
   "dependencies": {
+    "dotenv": "^6.2.0",
     "eslint": "^5.14.1",
     "eslint-config-strongloop": "^2.1.0",
     "tape": "^4.9.2",
