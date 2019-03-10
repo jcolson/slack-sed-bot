@@ -1,0 +1,18 @@
+#!/usr/bin/env node
+'use strict';
+
+const sedbot = require('./sedbot.js');
+const dotenv = require('dotenv');
+
+const DEFAULT_TOKEN = '[USE .env file for reading TOKEN';
+
+const opt = require('node-getopt').create([
+  [ 'h', 'help',            'Show this help' ],
+  [ 't', 'token=[token]',   'Token to use for bot auth (default: ' + DEFAULT_TOKEN + ')' ],
+]).bindHelp().parseSystem();
+// load .env file
+dotenv.config();
+
+new sedbot.Sedbot({
+  token: opt.options.token || process.env.TOKEN || DEFAULT_TOKEN,
+}).listen();
