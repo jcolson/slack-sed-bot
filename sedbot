@@ -3,6 +3,7 @@
 
 const sedbot = require('./sedbot.js');
 const dotenv = require('dotenv');
+const path = require('path');
 
 const DEFAULT_TOKEN = '[USE .env file for reading TOKEN';
 
@@ -11,7 +12,7 @@ const opt = require('node-getopt').create([
   [ 't', 'token=[token]',   'Token to use for bot auth (default: ' + DEFAULT_TOKEN + ')' ],
 ]).bindHelp().parseSystem();
 // load .env file
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 new sedbot.Sedbot({
   token: opt.options.token || process.env.TOKEN || DEFAULT_TOKEN,
