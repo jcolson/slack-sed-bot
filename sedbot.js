@@ -42,9 +42,9 @@ class Sedbot {
     commandText += 'or try a command:\n';
     commandText += '`.help`                - this help\n';
     commandText += '`.usa [any text]`      - USA Patriatic Text\n';
-    commandText += '`.fra [any text]`      - France Patriatic Text\n';
-    commandText += '`.ire [any text]`      - Ireland Patriatic Text\n';
-    commandText += '`.wal [any text]`      - Wales Patriatic Text\n';
+    commandText += '`.fra [any text]`      - France Patriotic Text\n';
+    commandText += '`.ire [any text]`      - Ireland Patriotic Text\n';
+    commandText += '`.wal [any text]`      - Wales Patriotic Text\n';
     commandText += '`.wtr [location]?[m/u]`- get the current weather for [location]. [m] == metric, [u] == USCS\n';
     commandText += '`.about`               - get information about bot\n';
     commandText += '`.ping`                - ping the bot\n';
