@@ -44,6 +44,7 @@ class Sedbot {
     commandText += '`.usa [any text]`      - USA Patriatic Text\n';
     commandText += '`.fra [any text]`      - France Patriatic Text\n';
     commandText += '`.ire [any text]`      - Ireland Patriatic Text\n';
+    commandText += '`.wal [any text]`      - Wales Patriatic Text\n';
     commandText += '`.wtr [location]?[m/u]`- get the current weather for [location]. [m] == metric, [u] == USCS\n';
     commandText += '`.about`               - get information about bot\n';
     commandText += '`.ping`                - ping the bot\n';
@@ -165,7 +166,7 @@ class Sedbot {
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -203,6 +204,8 @@ class Sedbot {
         self.onCommandColoredText(messageData.channel, parameters, wsc, ['blue', 'white', 'red']);
       } else if (commandMatch === 'IRE') {
         self.onCommandColoredText(messageData.channel, parameters, wsc, ['green', 'white', 'orange']);
+      } else if (commandMatch === 'WAL') {
+        self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
       }
     }
   }
