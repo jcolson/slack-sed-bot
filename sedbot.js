@@ -5,6 +5,9 @@ var https = require('https');
 var Ws = require('ws');
 var im = require('imagemagick');
 var tmp = require('tmp');
+var request = require('request');
+var fs = require('fs');
+var path = require('path');
 
 class Sedbot {
   constructor(config) {
@@ -30,30 +33,39 @@ class Sedbot {
     // console.log(JSON.stringify(user));
     });
   }
-  onCommandHelp() {
+  onCommandHelp(channel, parameters, wsc) {
+    let self = this;
     let commandText = 'Just use something simple like:\n';
     commandText += '`s/text to replace/text replaced with`\n';
     commandText += 'or\n';
     commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
     commandText += 'or try a command:\n';
     commandText += '`.help`                - this help\n';
+    commandText += '`.usa [any text]`      - USA Patriatic Text\n';
+    commandText += '`.fra [any text]`      - France Patriatic Text\n';
+    commandText += '`.ire [any text]`      - Ireland Patriatic Text\n';
     commandText += '`.wtr [location]?[m/u]`- get the current weather for [location]. [m] == metric, [u] == USCS\n';
     commandText += '`.about`               - get information about bot\n';
     commandText += '`.ping`                - ping the bot\n';
+    self.respond(channel, commandText, wsc);
     return commandText;
   }
-  onCommandPing() {
+  onCommandPing(channel, parameters, wsc) {
+    let self = this;
     let commandText = 'PONG\n';
+    self.respond(channel, commandText, wsc);
     return commandText;
   }
-  onCommandAbout() {
+  onCommandAbout(channel, parameters, wsc) {
+    let self = this;
     let commandText = 'OS: ' + os.platform() + ' / ' + os.release() + '\n';
     commandText += 'Host: ' + os.hostname() + '\n';
     commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
     commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
-    return commandText;
+    self.respond(channel, commandText, wsc);
   }
-  onCommandUSA(parameters) {
+  onCommandColoredText(channel, parameters, wsc, colors) {
+    let self = this;
     var tmpobj = tmp.fileSync({ mode: '0644', prefix: 'sedbot-', postfix: '.png' });
     console.log('File: ', tmpobj.name);
     console.log('Filedescriptor: ', tmpobj.fd);
@@ -62,38 +74,61 @@ class Sedbot {
       let currentChar = parameters.substring(i, i + 1);
       imCommandLine.push('\(');
       imCommandLine.push('-fill');
-      if (i % 3 === 0) {
-        imCommandLine.push('red');
-      } else if (i % 3 === 1) {
-        imCommandLine.push('white');
-      } else if (i % 3 === 2) {
-        imCommandLine.push('blue');
-      }
+      imCommandLine.push(colors[i % 3]);
       imCommandLine.push('-font');
       imCommandLine.push('Helvetica');
       imCommandLine.push('-pointsize');
-      imCommandLine.push('16');
+      imCommandLine.push('60');
       imCommandLine.push('label:' + currentChar);
       imCommandLine.push('\)');
     }
     imCommandLine.push('+append');
     imCommandLine.push(tmpobj.name);
+    let commandText = 'convert';
     im.convert(imCommandLine,
       function(err, stdout){
         if (err) {
           console.error(err);
+          commandText = err.message;
         } else {
-          console.log('stdout:', stdout);
+          console.log('stdout: ', stdout);
+          for (let commandParam of imCommandLine) {
+            commandText += ' ';
+            commandText += commandParam;
+          }
         }
+        self.upload(colors[0] + ',' + colors[1] + ',' + colors[2], tmpobj, channel);
+        console.log('imagemagick command issued: '+commandText);
+        // self.respond(channel, commandText, wsc);
       });
-    let commandText = 'convert';
-    for (let commandParam of imCommandLine) {
-      commandText += ' ';
-      commandText += commandParam;
-    }
-    return commandText;
   }
-  onCommandWeather(parameters, wsc, messageData) {
+  respond(channel, commandText, wsc) {
+    let sendCommandData = {
+      type: 'message',
+      channel: channel,
+      text: commandText,
+    };
+    wsc.send(JSON.stringify(sendCommandData));
+  }
+  upload(title, file, channel) {
+    let self = this;
+    request.post({
+      url: 'https://slack.com/api/files.upload',
+      formData: {
+        token: self.config.token,
+        title: title,
+        filename: path.basename(file.name),
+        filetype: 'auto',
+        channels: channel,
+        file: fs.createReadStream(file.name),
+      },
+    }, function(err, response) {
+      console.log(JSON.parse(response.body));
+      console.error(err);
+    });
+  }
+  onCommandWeather(channel, parameters, wsc) {
+    let self = this;
     let format = 'format=4';
     if (parameters.indexOf('?') === -1) {
       format = '?' + format;
@@ -122,21 +157,15 @@ class Sedbot {
         if (body.indexOf('Error') !== -1) {
           body = 'Error encountered, try a different location';
         }
-        let sendCommandData = {
-          type: 'message',
-          channel: messageData.channel,
-          text: body,
-        };
-        wsc.send(JSON.stringify(sendCommandData));
+        self.respond(channel, body, wsc);
       });
     }).on('error', (e) => {
       console.error('received error: ' + e.message);
     });
-    return '';
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -160,29 +189,25 @@ class Sedbot {
       parameters = messageData.text.substring(substringTo + 1);
     }
     if (commandMatch !== null) {
-      let commandText = '';
       if (commandMatch === 'HELP') {
-        commandText = self.onCommandHelp();
+        self.onCommandHelp(messageData.channel, parameters, wsc);
       } else if (commandMatch === 'PING') {
-        commandText = self.onCommandPing();
+        self.onCommandPing(messageData.channel, parameters, wsc);
       } else if (commandMatch === 'ABOUT') {
-        commandText = self.onCommandAbout();
+        self.onCommandAbout(messageData.channel, parameters, wsc);
       } else if (commandMatch === 'WTR') {
-        commandText = self.onCommandWeather(parameters, wsc, messageData);
+        self.onCommandWeather(messageData.channel, parameters, wsc);
       } else if (commandMatch === 'USA') {
-        commandText = self.onCommandUSA(parameters);
-      }
-      if (commandText !== '') {
-        let sendCommandData = {
-          type: 'message',
-          channel: messageData.channel,
-          text: commandText,
-        };
-        wsc.send(JSON.stringify(sendCommandData));
+        self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'white', 'blue']);
+      } else if (commandMatch === 'FRA') {
+        self.onCommandColoredText(messageData.channel, parameters, wsc, ['blue', 'white', 'red']);
+      } else if (commandMatch === 'IRE') {
+        self.onCommandColoredText(messageData.channel, parameters, wsc, ['green', 'white', 'orange']);
       }
     }
   }
   handleSed(messageData, wsc) {
+    var self = this;
     var sedMatch = messageData.text.match(this.sedRegex);
     if (sedMatch === null) {
       // Don't save replacement commands (messages) to history.
@@ -218,13 +243,7 @@ class Sedbot {
               console.error('Didn\'t find user in map');
             }
             var newText = 'Correction, *' + sender + '* ...\n' + this.history[messageData.channel][i].text.replace(matcher, ' *' + sedMatch[3] + '* ');
-            var sendData = {
-              type: 'message',
-              channel: messageData.channel,
-              text: newText,
-              mrkdwn: true,
-            };
-            wsc.send(JSON.stringify(sendData));
+            self.respond(messageData.channel, newText, wsc);
             return;
           }
         }
