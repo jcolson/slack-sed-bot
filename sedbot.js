@@ -98,7 +98,7 @@ class Sedbot {
           }
         }
         self.upload(colors[0] + ',' + colors[1] + ',' + colors[2], tmpobj, channel);
-        console.log('imagemagick command issued: '+commandText);
+        console.log('imagemagick command issued: ' + commandText);
         // self.respond(channel, commandText, wsc);
       });
   }
