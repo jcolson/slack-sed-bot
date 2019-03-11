@@ -68,16 +68,21 @@ class Sedbot {
   onCommandColoredText(channel, parameters, wsc, colors) {
     let self = this;
     var tmpobj = tmp.fileSync({ mode: '0644', prefix: 'sedbot-', postfix: '.png' });
-    console.log('File: ', tmpobj.name);
-    console.log('Filedescriptor: ', tmpobj.fd);
+    // console.log('File: ', tmpobj.name);
+    // console.log('Filedescriptor: ', tmpobj.fd);
     let imCommandLine = ['-background', 'transparent'];
+    let ii = 0;
     for (let i = 0; i < parameters.length; i++) {
       let currentChar = parameters.substring(i, i + 1);
+      if (currentChar === ' ') {
+        currentChar = '\\ ';
+        ii++;
+      }
       imCommandLine.push('\(');
       imCommandLine.push('-fill');
-      imCommandLine.push(colors[i % 3]);
+      imCommandLine.push(colors[(i - ii) % 3]);
       imCommandLine.push('-font');
-      imCommandLine.push('Helvetica');
+      imCommandLine.push('Arial');
       imCommandLine.push('-pointsize');
       imCommandLine.push('60');
       imCommandLine.push('label:' + currentChar);
@@ -85,21 +90,22 @@ class Sedbot {
     }
     imCommandLine.push('+append');
     imCommandLine.push(tmpobj.name);
-    let commandText = 'convert';
+    let imageMagickCommand = '';
     im.convert(imCommandLine,
       function(err, stdout){
         if (err) {
+          console.error('imagemagick excpetion: ' + err.message);
           console.error(err);
-          commandText = err.message;
-        } else {
-          console.log('stdout: ', stdout);
-          for (let commandParam of imCommandLine) {
-            commandText += ' ';
-            commandText += commandParam;
-          }
+          imageMagickCommand = err.message;
+        }
+        imageMagickCommand += 'convert ';
+        // console.log('stdout: ', stdout);
+        for (let commandParam of imCommandLine) {
+          imageMagickCommand += ' ';
+          imageMagickCommand += commandParam;
         }
         self.upload(colors[0] + ',' + colors[1] + ',' + colors[2], tmpobj, channel);
-        console.log('imagemagick command issued: ' + commandText);
+        console.log('imagemagick command issued: ' + imageMagickCommand);
         // self.respond(channel, commandText, wsc);
       });
   }
@@ -124,8 +130,9 @@ class Sedbot {
         file: fs.createReadStream(file.name),
       },
     }, function(err, response) {
-      console.log(JSON.parse(response.body));
-      console.error(err);
+      console.error('Caught exception: ' + err);
+      console.error(JSON.parse(response.body));
+
     });
   }
   onCommandWeather(channel, parameters, wsc) {
@@ -252,7 +259,7 @@ class Sedbot {
         }
       }
     } catch (e) {
-      console.error(e);
+      console.error('Caught exception doing sed replace' + e);
     }
   }
   onRTMUserChange(messageData, wsc) {
@@ -264,23 +271,20 @@ class Sedbot {
     const self = this;
     // console.log('onRTMMessage: ' + message);
     var messageData = JSON.parse(message);
-
     if (messageData.type === 'user_change') {
       console.log('Got a user change event: ' + messageData.user.id);
       self.onRTMUserChange(messageData, wsc);
-      return;
     } else if (messageData.type !== 'message') {
       console.log('Got an event we\'re not processing: ' + messageData.type);
-      return;
-    }
-    console.log('Got a message event');
-
-    if (typeof messageData.text !== 'string') {
+    } else {
+      console.log('Got a message event');
+      if (typeof messageData.text !== 'string') {
       // This is probably a message edit - ignore those completely.
-      return;
+        return;
+      }
+      self.handleCommands(messageData, wsc);
+      self.handleSed(messageData, wsc);
     }
-    self.handleCommands(messageData, wsc);
-    self.handleSed(messageData, wsc);
   }
   listen() {
     const self = this;
