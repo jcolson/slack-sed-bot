@@ -41,7 +41,7 @@ class Sedbot {
     commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
     commandText += 'or try a command:\n';
     commandText += '`.help`                - this help\n';
-    commandText += '`.usa [any text]`      - USA Patriatic Text\n';
+    commandText += '`.usa [any text]`      - USA Patriotic Text\n';
     commandText += '`.fra [any text]`      - France Patriotic Text\n';
     commandText += '`.ire [any text]`      - Ireland Patriotic Text\n';
     commandText += '`.wal [any text]`      - Wales Patriotic Text\n';
@@ -255,13 +255,25 @@ class Sedbot {
       console.error(e);
     }
   }
-  onMessage(message, wsc) {
+  onRTMUserChange(messageData, wsc) {
+    let self = this;
+    let users = [messageData.user];
+    self.mapUsers(users);
+  }
+  onRTMMessage(message, wsc) {
     const self = this;
-    console.log(message);
+    // console.log('onRTMMessage: ' + message);
     var messageData = JSON.parse(message);
-    if (messageData.type !== 'message') {
+
+    if (messageData.type === 'user_change') {
+      console.log('Got a user change event: ' + messageData.user.id);
+      self.onRTMUserChange(messageData, wsc);
+      return;
+    } else if (messageData.type !== 'message') {
+      console.log('Got an event we\'re not processing: ' + messageData.type);
       return;
     }
+    console.log('Got a message event');
 
     if (typeof messageData.text !== 'string') {
       // This is probably a message edit - ignore those completely.
@@ -288,7 +300,7 @@ class Sedbot {
         var wsUrl = data.url;
         var wsc = new Ws(wsUrl);
         wsc.on('message', function(message) {
-          self.onMessage(message, wsc);
+          self.onRTMMessage(message, wsc);
         });
       });
     });
