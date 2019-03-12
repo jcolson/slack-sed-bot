@@ -81,7 +81,7 @@ class Sedbot {
       commandText += '* wants to know: *';
       commandText += parameters;
       commandText += '???* ... \nThe Magic 8 Ball says ... \n_';
-      commandText += ballAnswers[Math.floor((Math.random() * ballAnswers.length) + 1)];
+      commandText += ballAnswers[Math.floor((Math.random() * (ballAnswers.length - 1)))];
       commandText += '_';
     }
     self.respond(channel, commandText, wsc);
