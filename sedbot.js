@@ -40,20 +40,21 @@ class Sedbot {
     commandText += 'or\n';
     commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
     commandText += 'or try a command:\n';
-    commandText += '`.help`                - this help\n';
-    commandText += '`.usa [any text]`      - USA Patriotic Text\n';
-    commandText += '`.fra [any text]`      - France Patriotic Text\n';
-    commandText += '`.ire [any text]`      - Ireland Patriotic Text\n';
-    commandText += '`.wal [any text]`      - Wales Patriotic Text\n';
-    commandText += '`.wtr [location]?[m/u]`- get the current weather for [location]. [m] == metric, [u] == USCS\n';
-    commandText += '`.about`               - get information about bot\n';
-    commandText += '`.ping`                - ping the bot\n';
+    commandText += '`.help`                  - this help\n';
+    commandText += '`.usa [any text]`        - USA Patriotic Text\n';
+    commandText += '`.fra [any text]`        - France Patriotic Text\n';
+    commandText += '`.ire [any text]`        - Ireland Patriotic Text\n';
+    commandText += '`.wal [any text]`        - Wales Patriotic Text\n';
+    commandText += '`.wtr [location]?[m/u]`  - Retrieve the current weather for [location]. [m] == metric, [u] == USCS\n';
+    commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
+    commandText += '`.about`                 - Helpful information about bot\n';
+    commandText += '`.ping`                  - Ping the bot\n';
     self.respond(channel, commandText, wsc);
     return commandText;
   }
   onCommandPing(channel, parameters, wsc) {
     let self = this;
-    let commandText = 'PONG\n';
+    let commandText = 'PONG, my current time is ... ' + new Date().toLocaleTimeString() + '\n';
     self.respond(channel, commandText, wsc);
     return commandText;
   }
@@ -63,6 +64,26 @@ class Sedbot {
     commandText += 'Host: ' + os.hostname() + '\n';
     commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
     commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
+    self.respond(channel, commandText, wsc);
+  }
+  onCommand8Ball(user, channel, parameters, wsc) {
+    let self = this;
+    let ballAnswers = ['It is certain.', 'It is decidedly so.', 'Without a doubt.',
+      'Yes - definitely.', 'You may rely on it.', 'As I see it, yes.', 'Most likely.',
+      'Outlook good.', 'Yes.', 'Signs point to yes.', 'Reply hazy, try again.',
+      'Ask again later.', 'Better not tell you now.', 'Cannot predict now.', 'Concentrate and ask again.',
+      'Don\'t count on it.', 'My reply is no.', 'My sources say no.', 'Outlook not so good.', 'Very doubtful.'];
+    let commandText = 'Example Usage:\n`.8 Will I win the lottery tomorrow?`\n';
+    // console.log(user);
+    if (parameters !== '') {
+      commandText = '*';
+      commandText += this.userMap[user].real_name;
+      commandText += '* wants to know: *';
+      commandText += parameters;
+      commandText += '???* ... \nThe Magic 8 Ball says ... \n_';
+      commandText += ballAnswers[Math.floor((Math.random() * ballAnswers.length) + 1)];
+      commandText += '_';
+    }
     self.respond(channel, commandText, wsc);
   }
   onCommandColoredText(channel, parameters, wsc, colors) {
@@ -173,7 +194,7 @@ class Sedbot {
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -213,6 +234,8 @@ class Sedbot {
         self.onCommandColoredText(messageData.channel, parameters, wsc, ['green', 'white', 'orange']);
       } else if (commandMatch === 'WAL') {
         self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
+      } else if (commandMatch === '8') {
+        self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
       }
     }
   }
@@ -245,7 +268,7 @@ class Sedbot {
         for (var i = this.history[messageData.channel].length - 1; i >= 0; i--) {
           if (matcher.test(this.history[messageData.channel][i].text)) {
             // Matching message found, send the replacement and exit.
-            // Fallback user, in case someone new joined. Not handled ATM.
+            // Fallback user, in case someone new joined. Should not occur ...
             var sender = '_Unknown user_';
             try {
               sender = this.userMap[this.history[messageData.channel][i].user].real_name;
