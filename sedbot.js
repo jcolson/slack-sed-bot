@@ -94,7 +94,7 @@ class Sedbot {
     im.convert(imCommandLine,
       function(err, stdout){
         if (err) {
-          console.error('imagemagick excpetion: ' + err.message);
+          console.error('imagemagick exception: ' + err.message);
           console.error(err);
           imageMagickCommand = err.message;
         }
