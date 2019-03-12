@@ -8,6 +8,7 @@ var tmp = require('tmp');
 var request = require('request');
 var fs = require('fs');
 var path = require('path');
+const _DATABASE = 'sedbot-database.json';
 
 class Sedbot {
   constructor(config) {
@@ -24,6 +25,22 @@ class Sedbot {
     this.sedRegex = /(?:^|\s)s([^\w\s])([\-\(\)\*\[\]\s\w]+)\1([\-\(\)\*\[\]\s\w]+)\1?([\-\(\)\*\[\]\w]+)*/;
     this.userMap = {};
     this.userMapByName = {};
+    this.databaseJson = {};
+    this.readDB();
+  }
+  persistDB() {
+    const self = this;
+    fs.writeFileSync(path.resolve(__dirname, _DATABASE), JSON.stringify(self.databaseJson), 'utf8');
+    console.log('wrote database json');
+  }
+  readDB() {
+    const self = this;
+    try {
+      self.databaseJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, _DATABASE), 'utf8'));
+    } catch (e) {
+      console.error('e', e);
+    }
+    console.log('read database json');
   }
   mapUsers(users) {
     const self = this;
@@ -41,14 +58,14 @@ class Sedbot {
     commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
     commandText += 'or try a command:\n';
     commandText += '`.help`                  - this help\n';
+    commandText += '`.about`                 - Helpful information about bot\n';
+    commandText += '`.ping`                  - Ping the bot\n';
     commandText += '`.usa [any text]`        - USA Patriotic Text\n';
     commandText += '`.fra [any text]`        - France Patriotic Text\n';
     commandText += '`.ire [any text]`        - Ireland Patriotic Text\n';
     commandText += '`.wal [any text]`        - Wales Patriotic Text\n';
     commandText += '`.wtr [location]?[m/u]`  - Retrieve the current weather for [location]. [m] == metric, [u] == USCS\n';
     commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
-    commandText += '`.about`                 - Helpful information about bot\n';
-    commandText += '`.ping`                  - Ping the bot\n';
     self.respond(channel, commandText, wsc);
     return commandText;
   }
@@ -64,6 +81,24 @@ class Sedbot {
     commandText += 'Host: ' + os.hostname() + '\n';
     commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
     commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
+    self.respond(channel, commandText, wsc);
+  }
+  onCommandDucks(user, channel, parameters, wsc) {
+    const self = this;
+    if (!self.databaseJson.ducks) {
+      console.log('populating empty ducks for first time');
+      self.databaseJson.ducks = {};
+    }
+    if (!self.databaseJson.ducks[user]) {
+      console.log('populating duck count');
+      self.databaseJson.ducks[user] = {};
+      self.databaseJson.ducks[user].killed = 0;
+      self.databaseJson.ducks[user].friend = 0;
+      console.log(self.databaseJson);
+      console.log(JSON.stringify(self.databaseJson));
+    }
+    console.log(JSON.stringify(self.databaseJson));
+    let commandText = self.userMap[user].real_name + ' has killed ' + self.databaseJson.ducks[user].killed + ' and befriended ' + self.databaseJson.ducks[user].friend + ' ducks';
     self.respond(channel, commandText, wsc);
   }
   onCommand8Ball(user, channel, parameters, wsc) {
@@ -103,7 +138,7 @@ class Sedbot {
       imCommandLine.push('-fill');
       imCommandLine.push(colors[(i - ii) % 3]);
       imCommandLine.push('-font');
-      imCommandLine.push('Arial');
+      imCommandLine.push('AvantGarde');
       imCommandLine.push('-pointsize');
       imCommandLine.push('60');
       imCommandLine.push('label:' + currentChar);
@@ -194,7 +229,7 @@ class Sedbot {
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8', 'DUCKS'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -236,6 +271,8 @@ class Sedbot {
         self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
       } else if (commandMatch === '8') {
         self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
+      } else if (commandMatch === 'DUCKS') {
+        self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
       }
     }
   }
@@ -311,6 +348,11 @@ class Sedbot {
   }
   listen() {
     const self = this;
+    process.on('SIGINT', async() => {
+      console.log('Caught interrupt signal');
+      await self.persistDB();
+      process.exit();
+    });
     https.get('https://slack.com/api/rtm.start?token=' + this.config.token + '&simple_latest=true&no_unreads=true', function(res) {
       var body = '';
       res.on('data', function(data) {
