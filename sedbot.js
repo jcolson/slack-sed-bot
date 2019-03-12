@@ -26,6 +26,7 @@ class Sedbot {
     this.userMap = {};
     this.userMapByName = {};
     this.databaseJson = {};
+    this.duckIsLoose = false;
     this.readDB();
   }
   persistDB() {
@@ -38,7 +39,8 @@ class Sedbot {
     try {
       self.databaseJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, _DATABASE), 'utf8'));
     } catch (e) {
-      console.error('e', e);
+      console.error('Caught exception loading database, initializing.', e);
+      self.initializDB();
     }
     console.log('read database json');
   }
@@ -57,14 +59,17 @@ class Sedbot {
     commandText += 'or\n';
     commandText += '`s/[tT]ext to replace/text replaced with/g`\n';
     commandText += 'or try a command:\n';
-    commandText += '`.help`                  - this help\n';
-    commandText += '`.about`                 - Helpful information about bot\n';
-    commandText += '`.ping`                  - Ping the bot\n';
-    commandText += '`.usa [any text]`        - USA Patriotic Text\n';
-    commandText += '`.fra [any text]`        - France Patriotic Text\n';
-    commandText += '`.ire [any text]`        - Ireland Patriotic Text\n';
-    commandText += '`.wal [any text]`        - Wales Patriotic Text\n';
-    commandText += '`.wtr [location]?[m/u]`  - Retrieve the current weather for [location]. [m] == metric, [u] == USCS\n';
+    commandText += '`.help`\t\t\t\t\t\t\t- this help\n';
+    commandText += '`.about`\t\t\t\t\t\t- Helpful information about bot\n';
+    commandText += '`.ping`\t\t\t\t\t\t\t- Ping the bot\n';
+    commandText += '`.usa [any text]`\t\t- USA Patriotic Text\n';
+    commandText += '`.fra [any text]`\t\t- France Patriotic Text\n';
+    commandText += '`.ire [any text]`\t\t- Ireland Patriotic Text\n';
+    commandText += '`.wal [any text]`\t\t- Wales Patriotic Text\n';
+    commandText += '`.wtr [location]?[m/u]`- Retrieve the current weather for [location]. [m] == metric, [u] == USCS\n';
+    commandText += '`.ducks`\t\t\t\t\t\t\t- How many ducks have you befriended or harvested?\n';
+    commandText += '`.bang`\t\t\t\t\t\t\t- Harvest a duck!\n';
+    commandText += '`.bef`\t\t\t\t\t\t\t\t- Befriend a duck ...\n';
     commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
     self.respond(channel, commandText, wsc);
     return commandText;
@@ -85,21 +90,76 @@ class Sedbot {
   }
   onCommandDucks(user, channel, parameters, wsc) {
     const self = this;
-    if (!self.databaseJson.ducks) {
-      console.log('populating empty ducks for first time');
-      self.databaseJson.ducks = {};
-    }
     if (!self.databaseJson.ducks[user]) {
-      console.log('populating duck count');
-      self.databaseJson.ducks[user] = {};
-      self.databaseJson.ducks[user].killed = 0;
-      self.databaseJson.ducks[user].friend = 0;
-      console.log(self.databaseJson);
-      console.log(JSON.stringify(self.databaseJson));
+      self.initializeDucksForUser(user);
     }
     console.log(JSON.stringify(self.databaseJson));
     let commandText = self.userMap[user].real_name + ' has killed ' + self.databaseJson.ducks[user].killed + ' and befriended ' + self.databaseJson.ducks[user].friend + ' ducks';
     self.respond(channel, commandText, wsc);
+  }
+  onCommandDuckBang(user, channel, parameters, wsc) {
+    const self = this;
+    let commandText = 'bang';
+    if (self.duckIsLoose) {
+      self.duckIsLoose = false;
+      if (!self.databaseJson.ducks[user]) {
+        self.initializeDucksForUser(user);
+      }
+      console.log(self.databaseJson.ducks[user].killed);
+      self.databaseJson.ducks[user].killed = self.databaseJson.ducks[user].killed++;
+      console.log(self.databaseJson.ducks[user].killed);
+      commandText = self.userMap[user].real_name + ' just shot a duck!  Your total duck kills: ' + self.databaseJson.ducks[user].killed + '\n';
+    } else {
+      commandText = self.userMap[user].real_name + ', there is no duck ... what are you shooting at??\n';
+    }
+    self.respond(channel, commandText, wsc);
+  }
+  onCommandDuckFriend(user, channel, parameters, wsc) {
+    const self = this;
+    let commandText = 'bang';
+    if (self.duckIsLoose) {
+      self.duckIsLoose = false;
+      if (!self.databaseJson.ducks[user]) {
+        self.initializeDucksForUser(user);
+      }
+      self.databaseJson.ducks[user].friend = self.databaseJson.ducks[user].friend++;
+      commandText = self.userMap[user].real_name + ' just befriended a duck!  Your total duck friends: ' + self.databaseJson.ducks[user].friend + '\n';
+    } else {
+      commandText = self.userMap[user].real_name + ', there is no duck ... trying to befriend a ghost??\n';
+    }
+    self.respond(channel, commandText, wsc);
+  }
+  doDucks(channel, wsc) {
+    const self = this;
+    if (!self.duckIsLoose) {
+      let randomCheck = Math.floor((Math.random() * 100) - 1);
+      console.log('randomCheck: ' + randomCheck);
+      if (randomCheck < 100) {
+        console.log('let a duck loose');
+        let commandText = 'There is a duck is loose!  .bef(riend) it or .bang (harvest) it!\n';
+        self.duckIsLoose = true;
+        self.respond(channel, commandText, wsc);
+      } else {
+        console.log('not letting a duck loose');
+      }
+    } else {
+      console.log('duck is already loose, no need to try and let one go');
+    }
+  }
+  initializDB() {
+    const self = this;
+    if (!self.databaseJson.ducks) {
+      console.log('populating empty ducks for first time');
+      self.databaseJson.ducks = {};
+    }
+  }
+  initializeDucksForUser(user) {
+    const self = this;
+    console.log('initialize duck count');
+    self.databaseJson.ducks[user] = {};
+    self.databaseJson.ducks[user].killed = 0;
+    self.databaseJson.ducks[user].friend = 0;
+    console.log(JSON.stringify(self.databaseJson));
   }
   onCommand8Ball(user, channel, parameters, wsc) {
     let self = this;
@@ -229,7 +289,7 @@ class Sedbot {
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8', 'DUCKS'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8', 'DUCKS', 'BANG', 'BEF'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -273,6 +333,10 @@ class Sedbot {
         self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
       } else if (commandMatch === 'DUCKS') {
         self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
+      } else if (commandMatch === 'BANG') {
+        self.onCommandDuckBang(messageData.user, messageData.channel, parameters, wsc);
+      } else if (commandMatch === 'BEF') {
+        self.onCommandDuckFriend(messageData.user, messageData.channel, parameters, wsc);
       }
     }
   }
@@ -342,6 +406,7 @@ class Sedbot {
       // This is probably a message edit - ignore those completely.
         return;
       }
+      self.doDucks(messageData.channel, wsc);
       self.handleCommands(messageData, wsc);
       self.handleSed(messageData, wsc);
     }
