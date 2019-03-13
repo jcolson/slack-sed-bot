@@ -499,6 +499,11 @@ class Sedbot {
       await self.persistDB();
       process.exit();
     });
+    process.on('exit', async() => {
+      console.log('Caught exit signal');
+      await self.persistDB();
+      process.exit();
+    });
     https.get('https://slack.com/api/rtm.start?token=' + this.config.token + '&simple_latest=true&no_unreads=true', function(res) {
       var body = '';
       res.on('data', function(data) {
