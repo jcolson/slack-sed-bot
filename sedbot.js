@@ -71,7 +71,7 @@ class Sedbot {
     commandText += '`.ire [any text]`\t\t- Ireland Patriotic Text\n';
     commandText += '`.wal [any text]`\t\t- Wales Patriotic Text\n';
     commandText += '`.wtr [location]?[m/u]`- Retrieve the current weather for [location]. [m] == metric, [u] == USCS\n';
-    commandText += '`.ducks`\t\t\t\t\t\t\t- How many ducks have you befriended or harvested?\n';
+    commandText += '`.ducks [username]`\t- How many ducks have you/username befriended or harvested?\n';
     commandText += '`.bang`\t\t\t\t\t\t\t- Harvest a duck!\n';
     commandText += '`.bef`\t\t\t\t\t\t\t\t- Befriend a duck ...\n';
     commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
@@ -95,18 +95,21 @@ class Sedbot {
   onCommandDucks(user, channel, parameters, wsc) {
     const self = this;
     let commandText = '';
+    if (self.duckIsLoose) {
+      commandText += '*There is a duck currently flying around loose!!!*\n';
+    }
     if (parameters) {
       user = parameters.substring(2, parameters.length - 1);
       console.log('Getting duck status for specific user: ' + user);
     }
     if (!self.userMap[user]) {
-      commandText = 'Looked for that user, but had no luck finding his/her duck count!';
+      commandText += 'Looked for that user, but had no luck finding his/her duck count!';
     } else {
       if (!self.databaseJson.ducks[user]) {
         self.initializeDucksForUser(user);
       }
       // console.log(JSON.stringify(self.databaseJson));
-      commandText = '*' + self.userMap[user].real_name + '* has harvested *' + self.databaseJson.ducks[user].killed + '* and befriended *' + self.databaseJson.ducks[user].friend + '* ducks\n';
+      commandText += '*' + self.userMap[user].real_name + '* has harvested *' + self.databaseJson.ducks[user].killed + '* and befriended *' + self.databaseJson.ducks[user].friend + '* ducks\n';
       if (!parameters) {
         commandText += self.findTop5Ducks();
       }
