@@ -29,6 +29,8 @@ class Sedbot {
     this.userMapByName = {};
     this.databaseJson = {};
     this.duckIsLoose = false;
+    this.lastDuckUser = 'NONE YET';
+    this.lastDuckChannel = 'NONE YET';
     this.readDB();
   }
   persistDB() {
@@ -125,11 +127,17 @@ class Sedbot {
       + ' a duck!  Your total duck harvests: *'
       + (shot ? self.databaseJson.ducks[user].killed : self.databaseJson.ducks[user].friend)
       + '*\n';
+      self.lastDuckUser = user;
+      self.lastDuckChannel = channel;
     } else {
       commandText = self.userMap[user].real_name
       + ', there is no duck ... what are you '
       + (shot ? 'shooting at' : 'trying to friend')
-      + ' there Elmer Fud??\nYour penalty is channel ejection!\n';
+      + ' there Elmer Fud??\n*'
+      + (self.userMap[self.lastDuckUser] ? self.userMap[self.lastDuckUser].real_name : 'NONE YET')
+      + '* was the last successful harvestor in channel *'
+      + self.lastDuckChannel
+      + '*\nYour penalty is channel ejection!\n';
       self.kick(user, channel);
     }
     self.respond(channel, commandText, wsc);
