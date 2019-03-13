@@ -494,6 +494,11 @@ class Sedbot {
   }
   listen() {
     const self = this;
+    process.on('SIGTERM', async() => {
+      console.log('Caught termination signal');
+      await self.persistDB();
+      process.exit();
+    });
     process.on('SIGINT', async() => {
       console.log('Caught interrupt signal');
       await self.persistDB();
