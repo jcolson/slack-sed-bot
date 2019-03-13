@@ -6,10 +6,10 @@ const dotenv = require('dotenv');
 const path = require('path');
 
 const DEFAULT_TOKEN = '[USE .env file for reading TOKEN]';
-const DEFAULT_DUCKPERCENT = 5;
-const DEFAULT_KICKTOKEN = '[USE .env file for reading TOKEN]';
-const DEFAULT_DUCKCHANNELS = ['GG1AR4719'];
-const DEFAULT_DUCKCHANNELS_NOEJECT = ['GG1AR4719', 'G1SMBBHK3'];
+const DEFAULT_DUCKPERCENT = 10;
+const DEFAULT_KICKTOKEN = '[USE .env file for reading KICKTOKEN]';
+const DEFAULT_DUCKCHANNELS = undefined;
+const DEFAULT_DUCKCHANNELS_NOEJECT = undefined;
 
 const opt = require('node-getopt').create([
   [ 'h', 'help',            'Show this help' ],

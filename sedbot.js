@@ -16,6 +16,7 @@ class Sedbot {
     console.log('The token you provided: ' + this.config.token);
     console.log('The kick token you provided: ' + this.config.kicktoken);
     console.log('The duck percent you provided: ' + this.config.duckpercent);
+    console.log('The DUCK channels you provided: ' + this.config.duckchannels);
     if (!/^\w+-\w+-\w+-\w+$/.test(this.config.token)) {
       console.log('Token format is invalid.');
       process.exit(1);
@@ -54,7 +55,7 @@ class Sedbot {
     users.map(function(user) {
       self.userMap[user.id] = user;
       self.userMapByName[user.name] = user;
-    // console.log(JSON.stringify(user));
+      // console.log(JSON.stringify(user));
     });
   }
   onCommandHelp(channel, parameters, wsc) {
@@ -90,7 +91,7 @@ class Sedbot {
     let commandText = 'OS: ' + os.platform() + ' / ' + os.release() + '\n';
     commandText += 'Host: ' + os.hostname() + '\n';
     commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
-    commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' +  os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
+    commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' + os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
     self.respond(channel, commandText, wsc);
   }
   onCommandDucks(user, channel, parameters, wsc) {
@@ -117,7 +118,7 @@ class Sedbot {
     }
     self.respond(channel, commandText, wsc);
   }
-  onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
+  async onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
     const self = this;
     let commandText = 'bang';
     let eject = false;
@@ -129,29 +130,34 @@ class Sedbot {
       if (shot) self.databaseJson.ducks[user].killed++;
       else self.databaseJson.ducks[user].friend++;
       commandText = self.userMap[user].real_name + ' just ' + (shot ? 'shot' : 'befriended')
-      + ' a duck!  Your total duck harvests: *'
-      + (shot ? self.databaseJson.ducks[user].killed : self.databaseJson.ducks[user].friend)
-      + '*\n';
+        + ' a duck!  Your total duck harvests: *'
+        + (shot ? self.databaseJson.ducks[user].killed : self.databaseJson.ducks[user].friend)
+        + '*\n';
       self.lastDuckUser = user;
       self.lastDuckChannel = channel;
       self.lastDuckTime = new Date();
     } else {
       commandText = self.userMap[user].real_name
-      + ', there is no duck ... what are you '
-      + (shot ? 'shooting at' : 'trying to friend')
-      + ' there Elmer Fud??\n*'
-      + (self.userMap[self.lastDuckUser] ? self.userMap[self.lastDuckUser].real_name : 'NONE YET')
-      + '* was the last successful harvestor in channel *'
-      + self.lastDuckChannel
-      + '* at '
-      + self.lastDuckTime.toLocaleTimeString()
-      + '.\nYour penalty is channel ejection!\n';
-      eject = true;
+        + ', there is no duck ... what are you '
+        + (shot ? 'shooting at' : 'trying to friend')
+        + ' there Elmer Fud??\n*'
+        + (self.userMap[self.lastDuckUser] ? self.userMap[self.lastDuckUser].real_name : 'NONE YET')
+        + '* was the last successful harvestor in channel *'
+        + self.lastDuckChannel
+        + '* at '
+        + self.lastDuckTime.toLocaleTimeString()
+        + '\n';
+      eject = (self.config.noeject ? !self.config.noeject.includes(channel) : true) && !await self.isChannelPrivate(channel);
+      if (eject) {
+        commandText += 'Your penalty is channel ejection!  Buh-bye!\n';
+      } else {
+        commandText += 'No penalty, as this is a protected channel ...\n';
+      }
     }
     self.respond(channel, commandText, wsc);
-    if (eject && !self.config.noeject.includes(channel)) self.kick(user, channel);
+    if (eject) self.kick(user, channel);
   }
-  doDucks(wsc) {
+  async doDucks(wsc) {
     const self = this;
     if (!self.duckIsLoose) {
       let randomCheck = Math.floor((Math.random() * 100));
@@ -159,13 +165,13 @@ class Sedbot {
       if (randomCheck < this.config.duckpercent) {
         let commandText = 'There is a duck on the loose! ・゜゜ ​ ・。。・゜゜\​_ø< FLA​P FLAP!\n*.bef* (riend) it or *.bang* (harvest) it!\n';
         self.duckIsLoose = true;
-        let channelIndex = Math.floor((Math.random() * self.config.duckchannels.length));
         console.log(self.config.duckchannels);
-        let randomChannel = '';
+        let randomChannel;
         if (self.config.duckchannels) {
+          let channelIndex = Math.floor((Math.random() * self.config.duckchannels.length));
           randomChannel = self.config.duckchannels[channelIndex];
         } else {
-          randomChannel = self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
+          randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
         }
         self.respond(randomChannel, commandText, wsc);
         console.log('let a duck loose in: ' + randomChannel);
@@ -179,20 +185,28 @@ class Sedbot {
   findTop5Ducks() {
     const self = this;
     let commandText = '*Best duck marksmen:*\n';
+    let userCount = 0;
     Object.keys(self.databaseJson.ducks).map(key => ({ key: key, value: self.databaseJson.ducks[key] }))
       .sort((first, second) => (first.value.killed < second.value.killed) ? 1 : (first.value.killed > second.value.killed) ? -1 : 0)
       .forEach((sortedData) => {
-        commandText += self.userMap[sortedData.key].real_name;
-        commandText += ' - Ducks Harvested: *' + sortedData.value.killed;
-        commandText += '*\n';
+        if (userCount <= 5) {
+          userCount++;
+          commandText += self.userMap[sortedData.key].real_name;
+          commandText += ' - Ducks Harvested: *' + sortedData.value.killed;
+          commandText += '*\n';
+        }
       });
     commandText += '*Best duck friends:*\n';
+    userCount = 0;
     Object.keys(self.databaseJson.ducks).map(key => ({ key: key, value: self.databaseJson.ducks[key] }))
       .sort((first, second) => (first.value.friend < second.value.friend) ? 1 : (first.value.friend > second.value.friend) ? -1 : 0)
       .forEach((sortedData) => {
-        commandText += self.userMap[sortedData.key].real_name;
-        commandText += ' - Ducks Befriended: *' + sortedData.value.friend;
-        commandText += '*\n';
+        if (userCount <= 5) {
+          userCount++;
+          commandText += self.userMap[sortedData.key].real_name;
+          commandText += ' - Ducks Befriended: *' + sortedData.value.friend;
+          commandText += '*\n';
+        }
       });
     return commandText;
   }
@@ -258,7 +272,7 @@ class Sedbot {
     imCommandLine.push(tmpobj.name);
     let imageMagickCommand = '';
     im.convert(imCommandLine,
-      function(err, stdout){
+      function(err, stdout) {
         if (err) {
           console.error('imagemagick exception: ' + err.message);
           console.error(err);
@@ -320,23 +334,49 @@ class Sedbot {
   retrieveRandomConversationChannel(user) {
     let self = this;
     let channel = '';
-    request.post({
-      url: 'https://slack.com/api/users.conversations',
-      formData: {
-        token: self.config.token,
-        user: user,
-      },
-    }, function(err, response) {
-      if (err) console.error('Caught exception: ' + err);
-      else {
+    return new Promise((resolve, reject) => {
+      request.post({
+        url: 'https://slack.com/api/users.conversations',
+        formData: {
+          token: self.config.token,
+          user: user,
+        },
+      }, function(err, response) {
+        if (err) console.error('Caught exception: ' + err);
+        else {
         // console.error(JSON.parse(response.body).channels);
-        let channels = JSON.parse(response.body).channels;
-        // console.log('number channels: ' + channels.length);
-        let randomCheck = Math.floor((Math.random() * channels.length));
-        channel = channels[randomCheck].id;
-      }
+          let channels = JSON.parse(response.body).channels;
+          // console.log('number channels: ' + channels.length);
+          let randomCheck = Math.floor((Math.random() * channels.length));
+          channel = channels[randomCheck].id;
+          resolve(channel);
+        }
+      });
     });
-    return channel;
+  }
+  isChannelPrivate(channel) {
+    let self = this;
+    let channelPrivate = false;
+    return new Promise((resolve, reject) => {
+      request.post({
+        url: 'https://slack.com/api/conversations.info',
+        formData: {
+          token: self.config.token,
+          channel: channel,
+        },
+      }, function(err, response) {
+        if (err) console.error('Caught exception: ' + err);
+        else {
+        // console.error(JSON.parse(response.body).channels);
+          let channelInfo = JSON.parse(response.body).channel;
+          // console.log('channelInfo: ' + JSON.stringify(channelInfo));
+          // console.log('channel id: ' + channelInfo.id);
+          channelPrivate = channelInfo.is_private;
+          console.log('channel private? ' + channelPrivate);
+          resolve(channelPrivate);
+        }
+      });
+    });
   }
   onCommandWeather(channel, parameters, wsc) {
     let self = this;
@@ -490,7 +530,7 @@ class Sedbot {
     } else {
       console.log('Got a message event');
       if (typeof messageData.text !== 'string') {
-      // This is probably a message edit - ignore those completely.
+        // This is probably a message edit - ignore those completely.
         return;
       }
       self.doDucks(wsc);
