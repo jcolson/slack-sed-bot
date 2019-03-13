@@ -153,7 +153,7 @@ class Sedbot {
       let randomCheck = Math.floor((Math.random() * 100));
       console.log('randomCheck: ' + randomCheck);
       if (randomCheck < this.config.duckpercent) {
-        let commandText = 'There is a duck is loose!  *.bef* (riend) it or *.bang* (harvest) it!\n';
+        let commandText = 'There is a duck on the loose! ・゜゜ ​ ・。。・゜゜\​_ø< FLA​P FLAP!\n*.bef* (riend) it or *.bang* (harvest) it!\n';
         self.duckIsLoose = true;
         let channelIndex = Math.floor((Math.random() * self.config.duckchannels.length));
         console.log(self.config.duckchannels);
