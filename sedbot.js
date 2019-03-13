@@ -30,6 +30,7 @@ class Sedbot {
     this.databaseJson = {};
     this.duckIsLoose = false;
     this.lastDuckUser = 'NONE YET';
+    this.lastDuckTime = new Date();
     this.lastDuckChannel = 'NONE YET';
     this.readDB();
   }
@@ -133,6 +134,7 @@ class Sedbot {
       + '*\n';
       self.lastDuckUser = user;
       self.lastDuckChannel = channel;
+      self.lastDuckTime = new Date();
     } else {
       commandText = self.userMap[user].real_name
       + ', there is no duck ... what are you '
@@ -141,7 +143,9 @@ class Sedbot {
       + (self.userMap[self.lastDuckUser] ? self.userMap[self.lastDuckUser].real_name : 'NONE YET')
       + '* was the last successful harvestor in channel *'
       + self.lastDuckChannel
-      + '*\nYour penalty is channel ejection!\n';
+      + '* at '
+      + self.lastDuckTime.toLocaleTimeString()
+      + '.\nYour penalty is channel ejection!\n';
       eject = true;
     }
     self.respond(channel, commandText, wsc);
