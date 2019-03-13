@@ -5,15 +5,24 @@ const sedbot = require('./sedbot.js');
 const dotenv = require('dotenv');
 const path = require('path');
 
-const DEFAULT_TOKEN = '[USE .env file for reading TOKEN';
+const DEFAULT_TOKEN = '[USE .env file for reading TOKEN]';
+const DEFAULT_DUCKPERCENT = 5;
+const DEFAULT_KICKTOKEN = '[USE .env file for reading TOKEN]';
+const DEFAULT_DUCKCHANNELS = ['GG1AR4719'];
 
 const opt = require('node-getopt').create([
   [ 'h', 'help',            'Show this help' ],
-  [ 't', 'token=[token]',   'Token to use for bot auth (default: ' + DEFAULT_TOKEN + ')' ],
+  [ 't', 'token={token}',   'Token to use for bot auth (default: ' + DEFAULT_TOKEN + ')' ],
+  [ 'k', 'kick={token}',   'Token to use for bot auth (default: ' + DEFAULT_KICKTOKEN + ')' ],
+  [ 'd', 'duckpercent={integer}',   'Pecent of time ducks should be let loose (default: ' + DEFAULT_DUCKPERCENT + ')' ],
+  [ 'c', 'duckchannels=[chan1,chan2]',   'Channels in which ducks will be let loose (default: ' + DEFAULT_DUCKCHANNELS + ')' ],
 ]).bindHelp().parseSystem();
 // load .env file
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 new sedbot.Sedbot({
   token: opt.options.token || process.env.TOKEN || DEFAULT_TOKEN,
+  duckpercent: opt.options.duckpercent || process.env.DUCKPERCENT || DEFAULT_DUCKPERCENT,
+  kicktoken: opt.options.kicktoken || process.env.KICKTOKEN || DEFAULT_KICKTOKEN,
+  duckchannels: opt.options.duckchannels || process.env.DUCKCHANNELS.split(',') || DEFAULT_DUCKCHANNELS,
 }).listen();

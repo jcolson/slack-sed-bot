@@ -14,6 +14,8 @@ class Sedbot {
   constructor(config) {
     this.config = config;
     console.log('The token you provided: ' + this.config.token);
+    console.log('The kick token you provided: ' + this.config.kicktoken);
+    console.log('The duck percent you provided: ' + this.config.duckpercent);
     if (!/^\w+-\w+-\w+-\w+$/.test(this.config.token)) {
       console.log('Token format is invalid.');
       process.exit(1);
@@ -90,14 +92,26 @@ class Sedbot {
   }
   onCommandDucks(user, channel, parameters, wsc) {
     const self = this;
-    if (!self.databaseJson.ducks[user]) {
-      self.initializeDucksForUser(user);
+    let commandText = '';
+    if (parameters) {
+      user = parameters.substring(2, parameters.length - 1);
+      console.log('Getting duck status for specific user: ' + user);
     }
-    console.log(JSON.stringify(self.databaseJson));
-    let commandText = self.userMap[user].real_name + ' has killed ' + self.databaseJson.ducks[user].killed + ' and befriended ' + self.databaseJson.ducks[user].friend + ' ducks';
+    if (!self.userMap[user]) {
+      commandText = 'Looked for that user, but had no luck finding his/her duck count!';
+    } else {
+      if (!self.databaseJson.ducks[user]) {
+        self.initializeDucksForUser(user);
+      }
+      // console.log(JSON.stringify(self.databaseJson));
+      commandText = '*' + self.userMap[user].real_name + '* has harvested *' + self.databaseJson.ducks[user].killed + '* and befriended *' + self.databaseJson.ducks[user].friend + '* ducks\n';
+      if (!parameters) {
+        commandText += self.findTop5Ducks();
+      }
+    }
     self.respond(channel, commandText, wsc);
   }
-  onCommandDuckBang(user, channel, parameters, wsc) {
+  onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
     const self = this;
     let commandText = 'bang';
     if (self.duckIsLoose) {
@@ -105,46 +119,65 @@ class Sedbot {
       if (!self.databaseJson.ducks[user]) {
         self.initializeDucksForUser(user);
       }
-      console.log(self.databaseJson.ducks[user].killed);
-      self.databaseJson.ducks[user].killed = self.databaseJson.ducks[user].killed++;
-      console.log(self.databaseJson.ducks[user].killed);
-      commandText = self.userMap[user].real_name + ' just shot a duck!  Your total duck kills: ' + self.databaseJson.ducks[user].killed + '\n';
+      if (shot) self.databaseJson.ducks[user].killed++;
+      else self.databaseJson.ducks[user].friend++;
+      commandText = self.userMap[user].real_name + ' just ' + (shot ? 'shot' : 'befriended')
+      + ' a duck!  Your total duck harvests: *'
+      + (shot ? self.databaseJson.ducks[user].killed : self.databaseJson.ducks[user].friend)
+      + '*\n';
     } else {
-      commandText = self.userMap[user].real_name + ', there is no duck ... what are you shooting at??\n';
+      commandText = self.userMap[user].real_name
+      + ', there is no duck ... what are you '
+      + (shot ? 'shooting at' : 'trying to friend')
+      + ' there Elmer Fud??\nYour penalty is channel ejection!\n';
+      self.kick(user, channel);
     }
     self.respond(channel, commandText, wsc);
   }
-  onCommandDuckFriend(user, channel, parameters, wsc) {
-    const self = this;
-    let commandText = 'bang';
-    if (self.duckIsLoose) {
-      self.duckIsLoose = false;
-      if (!self.databaseJson.ducks[user]) {
-        self.initializeDucksForUser(user);
-      }
-      self.databaseJson.ducks[user].friend = self.databaseJson.ducks[user].friend++;
-      commandText = self.userMap[user].real_name + ' just befriended a duck!  Your total duck friends: ' + self.databaseJson.ducks[user].friend + '\n';
-    } else {
-      commandText = self.userMap[user].real_name + ', there is no duck ... trying to befriend a ghost??\n';
-    }
-    self.respond(channel, commandText, wsc);
-  }
-  doDucks(channel, wsc) {
+  doDucks(wsc) {
     const self = this;
     if (!self.duckIsLoose) {
-      let randomCheck = Math.floor((Math.random() * 100) - 1);
+      let randomCheck = Math.floor((Math.random() * 100));
       console.log('randomCheck: ' + randomCheck);
-      if (randomCheck < 100) {
-        console.log('let a duck loose');
-        let commandText = 'There is a duck is loose!  .bef(riend) it or .bang (harvest) it!\n';
+      if (randomCheck < this.config.duckpercent) {
+        let commandText = 'There is a duck is loose!  *.bef* (riend) it or *.bang* (harvest) it!\n';
         self.duckIsLoose = true;
-        self.respond(channel, commandText, wsc);
+        let channelIndex = Math.floor((Math.random() * self.config.duckchannels.length));
+        console.log(self.config.duckchannels);
+        let randomChannel = '';
+        if (self.config.duckchannels) {
+          randomChannel = self.config.duckchannels[channelIndex];
+        } else {
+          randomChannel = self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
+        }
+        self.respond(randomChannel, commandText, wsc);
+        console.log('let a duck loose in: ' + randomChannel);
       } else {
         console.log('not letting a duck loose');
       }
     } else {
       console.log('duck is already loose, no need to try and let one go');
     }
+  }
+  findTop5Ducks() {
+    const self = this;
+    let commandText = '*Best duck marksmen:*\n';
+    Object.keys(self.databaseJson.ducks).map(key => ({ key: key, value: self.databaseJson.ducks[key] }))
+      .sort((first, second) => (first.value.killed < second.value.killed) ? 1 : (first.value.killed > second.value.killed) ? -1 : 0)
+      .forEach((sortedData) => {
+        commandText += self.userMap[sortedData.key].real_name;
+        commandText += ' - Ducks Harvested: *' + sortedData.value.killed;
+        commandText += '*\n';
+      });
+    commandText += '*Best duck friends:*\n';
+    Object.keys(self.databaseJson.ducks).map(key => ({ key: key, value: self.databaseJson.ducks[key] }))
+      .sort((first, second) => (first.value.friend < second.value.friend) ? 1 : (first.value.friend > second.value.friend) ? -1 : 0)
+      .forEach((sortedData) => {
+        commandText += self.userMap[sortedData.key].real_name;
+        commandText += ' - Ducks Befriended: *' + sortedData.value.friend;
+        commandText += '*\n';
+      });
+    return commandText;
   }
   initializDB() {
     const self = this;
@@ -248,8 +281,45 @@ class Sedbot {
     }, function(err, response) {
       console.error('Caught exception: ' + err);
       console.error(JSON.parse(response.body));
-
     });
+  }
+  kick(user, channel) {
+    let self = this;
+    console.log('kicking ' + user + ' from ' + channel);
+    request.post({
+      url: 'https://slack.com/api/conversations.kick',
+      formData: {
+        token: self.config.kicktoken,
+        user: user,
+        channel: channel,
+      },
+    }, function(err, response) {
+      if (err) console.error('Caught exception: ' + err);
+      else {
+        console.error(JSON.parse(response.body));
+      }
+    });
+  }
+  retrieveRandomConversationChannel(user) {
+    let self = this;
+    let channel = '';
+    request.post({
+      url: 'https://slack.com/api/users.conversations',
+      formData: {
+        token: self.config.token,
+        user: user,
+      },
+    }, function(err, response) {
+      if (err) console.error('Caught exception: ' + err);
+      else {
+        // console.error(JSON.parse(response.body).channels);
+        let channels = JSON.parse(response.body).channels;
+        // console.log('number channels: ' + channels.length);
+        let randomCheck = Math.floor((Math.random() * channels.length));
+        channel = channels[randomCheck].id;
+      }
+    });
+    return channel;
   }
   onCommandWeather(channel, parameters, wsc) {
     let self = this;
@@ -334,9 +404,9 @@ class Sedbot {
       } else if (commandMatch === 'DUCKS') {
         self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
       } else if (commandMatch === 'BANG') {
-        self.onCommandDuckBang(messageData.user, messageData.channel, parameters, wsc);
+        self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
       } else if (commandMatch === 'BEF') {
-        self.onCommandDuckFriend(messageData.user, messageData.channel, parameters, wsc);
+        self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, false);
       }
     }
   }
@@ -406,7 +476,7 @@ class Sedbot {
       // This is probably a message edit - ignore those completely.
         return;
       }
-      self.doDucks(messageData.channel, wsc);
+      self.doDucks(wsc);
       self.handleCommands(messageData, wsc);
       self.handleSed(messageData, wsc);
     }
@@ -438,6 +508,7 @@ class Sedbot {
         });
       });
     });
+    self.persistDB();
   }
 }
 exports.Sedbot = Sedbot;
