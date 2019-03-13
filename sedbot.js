@@ -119,6 +119,7 @@ class Sedbot {
   onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
     const self = this;
     let commandText = 'bang';
+    let eject = false;
     if (self.duckIsLoose) {
       self.duckIsLoose = false;
       if (!self.databaseJson.ducks[user]) {
@@ -141,9 +142,10 @@ class Sedbot {
       + '* was the last successful harvestor in channel *'
       + self.lastDuckChannel
       + '*\nYour penalty is channel ejection!\n';
-      self.kick(user, channel);
+      eject = true;
     }
     self.respond(channel, commandText, wsc);
+    if (eject && !self.config.noeject.includes(channel)) self.kick(user, channel);
   }
   doDucks(wsc) {
     const self = this;
@@ -519,7 +521,7 @@ class Sedbot {
       await self.persistDB();
       process.exit();
     });
-    https.get('https://slack.com/api/rtm.start?token=' + this.config.token + '&simple_latest=true&no_unreads=true', function(res) {
+    https.get('https://slack.com/api/rtm.start?token=' + self.config.token + '&simple_latest=true&no_unreads=true', function(res) {
       var body = '';
       res.on('data', function(data) {
         body += data.toString();
