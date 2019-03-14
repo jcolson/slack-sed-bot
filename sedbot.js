@@ -36,6 +36,7 @@ class Sedbot {
     this.lastDuckUser = 'NONE YET';
     this.lastDuckTime = new Date();
     this.lastDuckChannel = 'NONE YET';
+    this.lastChannelMapCompleteRefresh = new Date().setDate(new Date().getDate() - 10);
     this.readDB();
   }
   persistDB() {
@@ -171,13 +172,7 @@ class Sedbot {
         let commandText = 'There is a duck on the loose! ・゜゜ ​ ・。。・゜゜\​_ø< FLA​P FLAP! /// *.bef* (riend) it or *.bang* (harvest) it!\n';
         self.duckIsLoose = true;
         // console.log(self.config.duckchannels);
-        let randomChannel;
-        if (self.config.duckchannels) {
-          let channelIndex = Math.floor((Math.random() * self.config.duckchannels.length));
-          randomChannel = self.config.duckchannels[channelIndex];
-        } else {
-          randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
-        }
+        let randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
         self.respond(randomChannel, commandText, wsc);
         console.log('let a duck loose in: ' + randomChannel);
       } else {
@@ -339,25 +334,53 @@ class Sedbot {
   retrieveRandomConversationChannel(user) {
     let self = this;
     let channel = '';
-    return new Promise((resolve, reject) => {
-      request.post({
-        url: 'https://slack.com/api/users.conversations',
-        formData: {
-          token: self.config.token,
-          user: user,
-        },
-      }, function(err, response) {
-        if (err) console.error('Caught exception: ' + err);
-        else {
-        // console.error(JSON.parse(response.body).channels);
-          let channels = JSON.parse(response.body).channels;
-          // console.log('number channels: ' + channels.length);
-          let randomCheck = Math.floor((Math.random() * channels.length));
-          channel = channels[randomCheck].id;
-          resolve(channel);
-        }
+    // console.log('lastchannelmapcompleterefresh: ' + self.lastChannelMapCompleteRefresh + ' new date: ' + (new Date().setDate(new Date().getDate() - 1)));
+    if (self.config.duckchannels) {
+      let channelIndex = Math.floor((Math.random() * self.config.duckchannels.length));
+      return self.config.duckchannels[channelIndex];
+    } else if (self.lastChannelMapCompleteRefresh > (new Date().setDate(new Date().getDate() - 1))) {
+      let randomCheck = Math.floor((Math.random() * self.channelMap.size));
+      let key = Array.from(self.channelMap.keys())[randomCheck];
+      console.log('key for the channel: ' + key + ' channels: ' + self.channelMap.size + ' channel: ' + self.channelMap.get(key).name);
+      while (self.channelMap.get(key).is_private) {
+        console.log('still checking for a non private channel to send a duck to ... last check was for ' + randomCheck);
+        randomCheck = Math.floor((Math.random() * self.channelMap.size));
+        key = Array.from(self.channelMap.keys())[randomCheck];
+      }
+      return self.channelMap.get(key).id;
+    } else {
+      console.log('making users.conversations api call');
+      return new Promise((resolve, reject) => {
+        request.post({
+          url: 'https://slack.com/api/users.conversations',
+          formData: {
+            token: self.config.token,
+            user: user,
+            exclude_archived: 'true',
+            types: 'public_channel,private_channel',
+          },
+        }, function(err, response) {
+          if (err) console.error('Caught exception: ' + err);
+          else {
+          // console.error(JSON.parse(response.body).channels);
+          // may as well populate cache ...
+            let channels = JSON.parse(response.body).channels;
+            channels.forEach((channel, index, array) => {
+              self.channelMap.set(channel.id, channel, ms('1d'));
+              self.lastChannelMapCompleteRefresh = new Date().getTime();
+            });
+            // console.log('number channels: ' + channels.length);
+            let randomCheck = Math.floor((Math.random() * channels.length));
+            while (channels[randomCheck].is_private) {
+              console.log('still checking for a non private channel to send a duck to ... last check was for ' + randomCheck);
+              randomCheck = Math.floor((Math.random() * channels.length));
+            }
+            channel = channels[randomCheck].id;
+            resolve(channel);
+          }
+        });
       });
-    });
+    }
   }
   retrieveChannelInfo(channel) {
     let self = this;
