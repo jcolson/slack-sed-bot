@@ -182,7 +182,7 @@ class Sedbot {
         self.respond(randomChannel, commandText, wsc);
         console.log('let a duck loose in: ' + await self.getChannelName(randomChannel));
       } else {
-        console.log('not letting a duck loose');
+        console.log('not letting a duck loose: ' + randomCheck);
       }
     } else {
       console.log('duck is already loose, no need to try and let one go');
