@@ -181,7 +181,7 @@ class Sedbot {
         // console.log(self.config.duckchannels);
         let randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
         self.respond(randomChannel, commandText, wsc);
-        console.log('let a duck loose in: ' + await self.getChannelName(randomChannel) + 'randomcheck: ' + randomCheck);
+        console.log('let a duck loose in: ' + await self.getChannelName(randomChannel) + ' randomcheck: ' + randomCheck);
       } else {
         console.log('not letting a duck loose: ' + randomCheck);
       }
