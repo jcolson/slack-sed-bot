@@ -569,6 +569,7 @@ class Sedbot {
   }
   onRTMMessage(message, wsc) {
     const self = this;
+    self.doDucks(wsc);
     // console.log('onRTMMessage: ' + message);
     var messageData = JSON.parse(message);
     if (messageData.type === 'user_change') {
@@ -582,7 +583,6 @@ class Sedbot {
         // This is probably a message edit - ignore those completely.
         return;
       }
-      self.doDucks(wsc);
       self.handleCommands(messageData, wsc);
       self.handleSed(messageData, wsc);
     }
