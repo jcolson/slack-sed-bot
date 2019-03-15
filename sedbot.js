@@ -169,12 +169,18 @@ class Sedbot {
       let randomCheck = Math.floor((Math.random() * 100));
       // console.log('randomCheck: ' + randomCheck);
       if (randomCheck < this.config.duckpercent) {
+        let randomChar = '​';
         let commandText = 'There is a duck on the loose! ・゜゜ ​ ・。。・゜゜\​_ø< FLA​P FLAP! /// *.bef* (riend) it or *.bang* (harvest) it!\n';
+        let injectLocation;
+        for (let i = 0; i < (commandText.length / 5); i++) {
+          injectLocation = Math.floor((Math.random() * (commandText.length - 1)));
+          commandText = commandText.slice(0, injectLocation) + randomChar + commandText.slice(injectLocation);
+        }
         self.duckIsLoose = true;
         // console.log(self.config.duckchannels);
         let randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
         self.respond(randomChannel, commandText, wsc);
-        console.log('let a duck loose in: ' + randomChannel);
+        console.log('let a duck loose in: ' + await self.getChannelName(randomChannel));
       } else {
         console.log('not letting a duck loose');
       }
