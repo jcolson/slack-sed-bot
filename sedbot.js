@@ -37,6 +37,7 @@ class Sedbot {
     this.lastDuckTime = new Date();
     this.lastDuckChannel = 'NONE YET';
     this.lastChannelMapCompleteRefresh = new Date().setDate(new Date().getDate() - 10);
+    this.intervalSet = false;
     this.readDB();
   }
   persistDB() {
@@ -180,7 +181,7 @@ class Sedbot {
         // console.log(self.config.duckchannels);
         let randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
         self.respond(randomChannel, commandText, wsc);
-        console.log('let a duck loose in: ' + await self.getChannelName(randomChannel));
+        console.log('let a duck loose in: ' + await self.getChannelName(randomChannel) + 'randomcheck: ' + randomCheck);
       } else {
         console.log('not letting a duck loose: ' + randomCheck);
       }
@@ -562,14 +563,19 @@ class Sedbot {
       console.error('Caught exception doing sed replace' + e);
     }
   }
-  onRTMUserChange(messageData, wsc) {
+  onRTMUserChange(messageData) {
     let self = this;
     let users = [messageData.user];
     self.mapUsers(users);
   }
   onRTMMessage(message, wsc) {
     const self = this;
-    self.doDucks(wsc);
+    if (!self.intervalSet) {
+      setInterval(() => {
+        self.doDucks(wsc);
+      }, 60000);
+      self.intervalSet = true;
+    }
     // console.log('onRTMMessage: ' + message);
     var messageData = JSON.parse(message);
     if (messageData.type === 'user_change') {
@@ -615,20 +621,19 @@ class Sedbot {
       process.exit();
     });
     https.get('https://slack.com/api/rtm.start?token=' + self.config.token + '&simple_latest=true&no_unreads=true', function(res) {
-      var body = '';
+      let body = '';
       res.on('data', function(data) {
         body += data.toString();
       });
       res.on('end', function() {
-        var data = JSON.parse(body);
+        let data = JSON.parse(body);
         if (!data.ok) {
           console.log('Slack API returned the following error: ' + data.error);
           process.exit(1);
         }
         self.mapUsers(data.users);
-
-        var wsUrl = data.url;
-        var wsc = new Ws(wsUrl);
+        let wsUrl = data.url;
+        let wsc = new Ws(wsUrl);
         wsc.on('message', function(message) {
           self.onRTMMessage(message, wsc);
         });
