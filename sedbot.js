@@ -127,8 +127,11 @@ class Sedbot {
     const self = this;
     let commandText = 'bang';
     let eject = false;
-    if (self.duckIsLoose) {
-      self.duckIsLoose = false;
+    if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
+      commandText = 'You\'re ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
+      commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
+      commandText += '\n';
+    } else if (self.duckIsLoose) {
       if (!self.databaseJson.ducks[user]) {
         self.initializeDucksForUser(user);
       }
@@ -138,6 +141,7 @@ class Sedbot {
         + ' a duck!  Your total ducks: *'
         + (shot ? self.databaseJson.ducks[user].killed : self.databaseJson.ducks[user].friend)
         + '*\n';
+      self.duckIsLoose = false;
       self.lastDuckUser = user;
       self.lastDuckChannel = await self.getChannelName(channel);
       self.lastDuckTime = new Date();
@@ -158,7 +162,10 @@ class Sedbot {
       if (eject) {
         commandText += 'Your penalty is channel ejection!  Buh-bye!\n';
       } else {
-        commandText += 'No penalty, as this is a protected channel ...\n';
+        self.databaseJson.ducks[user].penaltyTimeOut = new Date().setDate(new Date().getDate() + 1);
+        commandText += 'You\'re ammo has been *revoked* for *24 hours* ... see ya again after ';
+        commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
+        commandText += '\n';
       }
     }
     self.respond(channel, commandText, wsc);
