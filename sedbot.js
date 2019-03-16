@@ -473,7 +473,7 @@ class Sedbot {
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8', 'DUCKS', 'BANG', 'BEF'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8', 'DUCKS', 'DUCK', 'BANG', 'BEF'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -516,7 +516,7 @@ class Sedbot {
           self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
         } else if (commandMatch === '8') {
           self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
-        } else if (commandMatch === 'DUCKS') {
+        } else if (commandMatch === 'DUCKS' || commandMatch === 'DUCK') {
           self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
         } else if (commandMatch === 'BANG') {
           self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
