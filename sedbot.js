@@ -127,14 +127,14 @@ class Sedbot {
     const self = this;
     let commandText = 'bang';
     let eject = false;
-    if (self.databaseJson.ducks[user] && self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
+    if (!self.databaseJson.ducks[user]) {
+      self.initializeDucksForUser(user);
+    }
+    if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
       commandText = 'You\'re ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
       commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
       commandText += '\n';
     } else if (self.duckIsLoose) {
-      if (!self.databaseJson.ducks[user]) {
-        self.initializeDucksForUser(user);
-      }
       if (shot) self.databaseJson.ducks[user].killed++;
       else self.databaseJson.ducks[user].friend++;
       commandText = self.userMap[user].real_name + ' just ' + (shot ? 'shot' : 'befriended')
@@ -485,42 +485,44 @@ class Sedbot {
     } else if (messageData.text.startsWith('.')) {
       substringFrom = '.'.length;
     }
-    let substringTo = messageData.text.substring(substringFrom).indexOf(' ');
-    if (substringTo === -1) {
-      substringTo = messageData.text.length;
-    } else {
-      substringTo = substringTo + substringFrom;
-    }
-    let possibleCommand = messageData.text.substring(substringFrom, substringTo).toUpperCase();
-    if (commands.includes(possibleCommand)) {
-      commandMatch = possibleCommand;
-      parameters = messageData.text.substring(substringTo + 1);
-    }
-    if (commandMatch !== null) {
-      if (commandMatch === 'HELP') {
-        self.onCommandHelp(messageData.channel, parameters, wsc);
-      } else if (commandMatch === 'PING') {
-        self.onCommandPing(messageData.channel, parameters, wsc);
-      } else if (commandMatch === 'ABOUT') {
-        self.onCommandAbout(messageData.channel, parameters, wsc);
-      } else if (commandMatch === 'WTR') {
-        self.onCommandWeather(messageData.channel, parameters, wsc);
-      } else if (commandMatch === 'USA') {
-        self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'white', 'blue']);
-      } else if (commandMatch === 'FRA') {
-        self.onCommandColoredText(messageData.channel, parameters, wsc, ['blue', 'white', 'red']);
-      } else if (commandMatch === 'IRE') {
-        self.onCommandColoredText(messageData.channel, parameters, wsc, ['green', 'white', 'orange']);
-      } else if (commandMatch === 'WAL') {
-        self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
-      } else if (commandMatch === '8') {
-        self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
-      } else if (commandMatch === 'DUCKS') {
-        self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
-      } else if (commandMatch === 'BANG') {
-        self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
-      } else if (commandMatch === 'BEF') {
-        self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, false);
+    if (substringFrom !== -1) {
+      let substringTo = messageData.text.substring(substringFrom).indexOf(' ');
+      if (substringTo === -1) {
+        substringTo = messageData.text.length;
+      } else {
+        substringTo = substringTo + substringFrom;
+      }
+      let possibleCommand = messageData.text.substring(substringFrom, substringTo).toUpperCase();
+      if (commands.includes(possibleCommand)) {
+        commandMatch = possibleCommand;
+        parameters = messageData.text.substring(substringTo + 1);
+      }
+      if (commandMatch !== null) {
+        if (commandMatch === 'HELP') {
+          self.onCommandHelp(messageData.channel, parameters, wsc);
+        } else if (commandMatch === 'PING') {
+          self.onCommandPing(messageData.channel, parameters, wsc);
+        } else if (commandMatch === 'ABOUT') {
+          self.onCommandAbout(messageData.channel, parameters, wsc);
+        } else if (commandMatch === 'WTR') {
+          self.onCommandWeather(messageData.channel, parameters, wsc);
+        } else if (commandMatch === 'USA') {
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'white', 'blue']);
+        } else if (commandMatch === 'FRA') {
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['blue', 'white', 'red']);
+        } else if (commandMatch === 'IRE') {
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['green', 'white', 'orange']);
+        } else if (commandMatch === 'WAL') {
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
+        } else if (commandMatch === '8') {
+          self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
+        } else if (commandMatch === 'DUCKS') {
+          self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
+        } else if (commandMatch === 'BANG') {
+          self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
+        } else if (commandMatch === 'BEF') {
+          self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, false);
+        }
       }
     }
   }
