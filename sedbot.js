@@ -130,7 +130,9 @@ class Sedbot {
     if (!self.databaseJson.ducks[user]) {
       self.initializeDucksForUser(user);
     }
-    if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
+    if (self.userMap[user].is_bot) {
+      commandText = 'No bots allowed to play\n';
+    } else if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
       commandText = 'You\'re ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
       commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
       commandText += '\n';
