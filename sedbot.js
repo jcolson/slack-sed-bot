@@ -130,9 +130,7 @@ class Sedbot {
     if (!self.databaseJson.ducks[user]) {
       self.initializeDucksForUser(user);
     }
-    if (self.userMap[user].is_bot) {
-      commandText = 'No bots allowed to play\n';
-    } else if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
+    if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
       commandText = 'You\'re ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
       commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
       commandText += '\n';
@@ -160,7 +158,7 @@ class Sedbot {
         + ' on '
         + self.lastDuckTime.toLocaleDateString()
         + '\n';
-      eject = (self.config.noeject ? !self.config.noeject.includes(channel) : true) && !await self.isChannelPrivate(channel);
+      eject = (self.config.noeject ? !self.config.noeject.includes(channel) : true) && !await self.isChannelPrivate(channel) && !await self.isChannelGeneral(channel);
       if (eject) {
         commandText += 'Your penalty is channel ejection!  Buh-bye!\n';
       } else {
@@ -437,6 +435,13 @@ class Sedbot {
     // console.log('channel id: ' + channelInfo.id);
     return channelInfo.is_private;
   }
+  async isChannelGeneral(channel) {
+    let self = this;
+    let channelInfo = await self.retrieveChannelInfo(channel);
+    // console.log('channelInfo: ' + JSON.stringify(channelInfo));
+    // console.log('channel id: ' + channelInfo.id);
+    return channelInfo.is_general;
+  }
   onCommandWeather(channel, parameters, wsc) {
     let self = this;
     let format = 'format=4';
@@ -594,6 +599,8 @@ class Sedbot {
       self.onRTMUserChange(messageData, wsc);
     } else if (messageData.type !== 'message') {
       console.log('Got an event we\'re not processing: ' + messageData.type);
+    } if (messageData.user && self.userMap[messageData.user] && self.userMap[messageData.user].is_bot) {
+      console.log('No bots allowed to access sedbot ... ' + messageData.user.id);
     } else {
       console.log('Got a message event');
       if (typeof messageData.text !== 'string') {
