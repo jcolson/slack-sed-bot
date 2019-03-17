@@ -38,7 +38,6 @@ class Sedbot {
     this.lastDuckChannel = 'NONE YET';
     this.lastChannelMapCompleteRefresh = new Date().setDate(new Date().getDate() - 10);
     this.intervalSet = false;
-    this.readDB();
   }
   persistDB() {
     const self = this;
@@ -151,7 +150,7 @@ class Sedbot {
         + (shot ? 'shooting at' : 'trying to friend')
         + ' there Elmer Fud??\n*'
         + (self.userMap[self.lastDuckUser] ? self.userMap[self.lastDuckUser].real_name : 'NONE YET')
-        + '* was the last successful harvestor in channel *'
+        + '* was the last successful harvestor in channel *#'
         + self.lastDuckChannel
         + '* at '
         + self.lastDuckTime.toLocaleTimeString()
@@ -178,7 +177,11 @@ class Sedbot {
       // console.log('randomCheck: ' + randomCheck);
       if (randomCheck < this.config.duckpercent) {
         let randomChar = '​';
-        let commandText = 'There is a duck on the loose! ・゜゜ ​ ・。。・゜゜\​_ø< FLA​P FLAP! /// *.bef* (riend) it or *.bang* (harvest) it!\n';
+        let flapText = '\_ø< FLA​P FLAP!';
+        if (Math.floor((Math.random() * 100)) > 50) {
+          flapText = '\_O< QUACK QUACK!';
+        }
+        let commandText = '・゜゜・。。・゜゜' + flapText + ' /// *.bef* (riend) it or *.bang* (harvest) it!\n';
         let injectLocation;
         for (let i = 0; i < (commandText.length / 5); i++) {
           injectLocation = Math.floor((Math.random() * (commandText.length - 1)));
@@ -613,6 +616,7 @@ class Sedbot {
   }
   listen() {
     const self = this;
+    this.readDB();
     process.on('SIGTERM', async() => {
       console.log('Caught termination signal');
       await self.persistDB();
