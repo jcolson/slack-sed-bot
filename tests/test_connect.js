@@ -14,15 +14,17 @@ test('bar', async t => {
 
 test('config-fail', t => {
   const error = t.throws(() => {
-		new sedbot.Sedbot();
-	}, TypeError);
-	t.is(error.message, 'Cannot read property \'token\' of undefined');
+    let Sedbot = new sedbot.Sedbot();
+    console.log(Sedbot.kicktoken);
+  }, TypeError);
+  t.is(error.message, 'Cannot read property \'token\' of undefined');
 });
 
 test('config-success', t => {
-  new sedbot.Sedbot({token: 'xoxb-xxxxyyyyzz-xxxxyyyyzzzz-xxxxyyyyzzzzxxxxyyyyzzzz',
+  let Sedbot = new sedbot.Sedbot({token: 'xoxb-xxxxyyyyzz-xxxxyyyyzzzz-xxxxyyyyzzzzxxxxyyyyzzzz',
     duckpercent: '4',
     kicktoken: 'xoxb-xxxxyyyyzz-xxxxyyyyzzzz-xxxxyyyyzzzzxxxxyyyyzzzz',
   });
+  console.log(Sedbot.kicktoken);
   t.pass();
 });
