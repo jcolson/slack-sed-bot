@@ -162,7 +162,7 @@ class Sedbot {
         commandText += 'Your penalty is channel ejection!  Buh-bye!\n';
       } else {
         self.databaseJson.ducks[user].penaltyTimeOut = new Date().setDate(new Date().getDate() + 1);
-        commandText += 'You\'re ammo has been *revoked* for *24 hours* ... see ya again after ';
+        commandText += 'Your ammo has been *revoked* for *24 hours* ... see ya again after ';
         commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
         commandText += '\n';
       }
