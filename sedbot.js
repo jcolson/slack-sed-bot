@@ -30,6 +30,7 @@ class Sedbot {
     this.sedRegex = /(?:^|\s)s([^\w\s])([\-\(\)\*\[\]\s\w]+)\1([\-\(\)\*\[\]\s\w]+)\1?([\-\(\)\*\[\]\w]+)*/;
     this.userMap = {};
     this.userMapByName = {};
+    this.imMap = {};
     this.channelMap = new Cache();
     this.databaseJson = {};
     this.duckIsLoose = false;
@@ -62,7 +63,7 @@ class Sedbot {
       // console.log(JSON.stringify(user));
     });
   }
-  onCommandHelp(channel, parameters, wsc) {
+  onCommandHelp(user, parameters, wsc) {
     let self = this;
     let commandText = 'Just use something simple like:\n';
     commandText += '`s/text to replace/text replaced with`\n';
@@ -81,24 +82,24 @@ class Sedbot {
     commandText += '`.bang`\t\t\t\t\t\t\t- Harvest a duck!\n';
     commandText += '`.bef`\t\t\t\t\t\t\t\t- Befriend a duck ...\n';
     commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
-    self.respond(channel, commandText, wsc);
+    self.respondIm(user, commandText, wsc);
     return commandText;
   }
-  onCommandPing(channel, parameters, wsc) {
+  onCommandPing(user, parameters, wsc) {
     let self = this;
     let commandText = 'PONG, my current time is ... ' + new Date().toLocaleTimeString() + '\n';
-    self.respond(channel, commandText, wsc);
+    self.respondIm(user, commandText, wsc);
     return commandText;
   }
-  onCommandAbout(channel, parameters, wsc) {
+  onCommandAbout(user, parameters, wsc) {
     let self = this;
     let commandText = 'OS: ' + os.platform() + ' / ' + os.release() + '\n';
     commandText += 'Host: ' + os.hostname() + '\n';
     commandText += 'Uptime: ' + (os.uptime() / 60 / 60 / 24).toFixed(2) + ' days\n';
     commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' + os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
-    self.respond(channel, commandText, wsc);
+    self.respondIm(user, commandText, wsc);
   }
-  onCommandDucks(user, channel, parameters, wsc) {
+  onCommandDucks(user, parameters, wsc) {
     const self = this;
     let commandText = '';
     if (self.duckIsLoose) {
@@ -120,7 +121,7 @@ class Sedbot {
         commandText += self.findTop5Ducks();
       }
     }
-    self.respond(channel, commandText, wsc);
+    self.respondIm(user, commandText, wsc);
   }
   async onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
     const self = this;
@@ -313,6 +314,41 @@ class Sedbot {
       text: commandText,
     };
     wsc.send(JSON.stringify(sendCommandData));
+  }
+  openIm(user) {
+    let self = this;
+    return new Promise((resolve, reject) => {
+      request.post({
+        url: 'https://slack.com/api/conversations.open',
+        formData: {
+          token: self.config.token,
+          users: user,
+        },
+      }, function(err, response) {
+        if (err) console.error('Caught exception: ' + err);
+        else {
+          let resp = JSON.parse(response.body);
+          self.imMap[user] = resp.channel.id;
+          resolve(resp);
+        }
+      });
+    });
+  }
+  async respondIm(user, commandText, wsc) {
+    let self = this;
+    if (!self.imMap[user]) {
+      await self.openIm(user);
+    }
+    console.log('user: ' + user);
+    let sendCommandData = {
+      type: 'message',
+      user: user,
+      channel: self.imMap[user],
+      text: commandText,
+      channel_type: 'im',
+    };
+    wsc.send(JSON.stringify(sendCommandData));
+
   }
   upload(title, file, channel) {
     let self = this;
@@ -509,11 +545,11 @@ class Sedbot {
       }
       if (commandMatch !== null) {
         if (commandMatch === 'HELP') {
-          self.onCommandHelp(messageData.channel, parameters, wsc);
+          self.onCommandHelp(messageData.user, parameters, wsc);
         } else if (commandMatch === 'PING') {
-          self.onCommandPing(messageData.channel, parameters, wsc);
+          self.onCommandPing(messageData.user, parameters, wsc);
         } else if (commandMatch === 'ABOUT') {
-          self.onCommandAbout(messageData.channel, parameters, wsc);
+          self.onCommandAbout(messageData.user, parameters, wsc);
         } else if (commandMatch === 'WTR') {
           self.onCommandWeather(messageData.channel, parameters, wsc);
         } else if (commandMatch === 'USA') {
@@ -527,7 +563,7 @@ class Sedbot {
         } else if (commandMatch === '8') {
           self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
         } else if (commandMatch === 'DUCKS' || commandMatch === 'DUCK') {
-          self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
+          self.onCommandDucks(messageData.user, parameters, wsc);
         } else if (commandMatch === 'BANG') {
           self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
         } else if (commandMatch === 'BEF') {
@@ -600,6 +636,11 @@ class Sedbot {
     if (messageData.type === 'user_change') {
       console.log('Got a user change event: ' + messageData.user.id);
       self.onRTMUserChange(messageData, wsc);
+    } else if (messageData.type === 'im_open') {
+      console.log('user: ' + messageData.user + ' channel: ' + messageData.channel);
+      self.imMap[messageData.user] = messageData.channel;
+    } else if (messageData.type === 'error') {
+      console.error(JSON.stringify(messageData));
     } else if (messageData.type !== 'message') {
       console.log('Got an event we\'re not processing: ' + messageData.type);
     } if (messageData.user && self.userMap[messageData.user] && self.userMap[messageData.user].is_bot) {
