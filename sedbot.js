@@ -125,15 +125,16 @@ class Sedbot {
   }
   async onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
     const self = this;
-    let commandText = 'bang';
+    let commandText;
+    let commandTextDirect;
     let eject = false;
     if (!self.databaseJson.ducks[user]) {
       self.initializeDucksForUser(user);
     }
     if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
-      commandText = 'Your ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
-      commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
-      commandText += '\n';
+      commandTextDirect = 'Your ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
+      commandTextDirect += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
+      commandTextDirect += '\n';
     } else if (self.duckIsLoose) {
       if (shot) self.databaseJson.ducks[user].killed++;
       else self.databaseJson.ducks[user].friend++;
@@ -160,15 +161,20 @@ class Sedbot {
         + '\n';
       eject = (self.config.noeject ? !self.config.noeject.includes(channel) : true) && !await self.isChannelPrivate(channel) && !await self.isChannelGeneral(channel);
       if (eject) {
-        commandText += 'Your penalty is channel ejection!  Buh-bye!\n';
+        commandTextDirect = 'Your penalty is channel ejection!  Buh-bye!\n';
       } else {
         self.databaseJson.ducks[user].penaltyTimeOut = new Date().setDate(new Date().getDate() + 1);
-        commandText += 'Your ammo has been *revoked* for *24 hours* ... see ya again after ';
-        commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
-        commandText += '\n';
+        commandTextDirect = 'Your ammo has been *revoked* for *24 hours* ... see ya again after ';
+        commandTextDirect += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
+        commandTextDirect += '\n';
       }
     }
-    self.respond(channel, commandText, wsc);
+    if (commandText) {
+      self.respond(channel, commandText, wsc);
+    }
+    if (commandTextDirect) {
+      self.respondIm(user, commandTextDirect, wsc);
+    }
     if (eject) self.kick(user, channel);
   }
   async doDucks(wsc) {
@@ -339,7 +345,6 @@ class Sedbot {
     if (!self.imMap[user]) {
       await self.openIm(user);
     }
-    console.log('user: ' + user);
     let sendCommandData = {
       type: 'message',
       user: user,
