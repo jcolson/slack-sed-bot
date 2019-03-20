@@ -147,7 +147,7 @@ class Sedbot {
       self.lastDuckChannel = await self.getChannelName(channel);
       self.lastDuckTime = new Date();
     } else {
-      commandText = self.userMap[user].real_name
+      commandTextDirect = self.userMap[user].real_name
         + ', there is no duck ... what are you '
         + (shot ? 'shooting at' : 'trying to friend')
         + ' there Elmer Fud??\n*'
@@ -161,10 +161,10 @@ class Sedbot {
         + '\n';
       eject = (self.config.noeject ? !self.config.noeject.includes(channel) : true) && !await self.isChannelPrivate(channel) && !await self.isChannelGeneral(channel);
       if (eject) {
-        commandTextDirect = 'Your penalty is channel ejection!  Buh-bye!\n';
+        commandTextDirect += 'Your penalty is channel ejection!  Buh-bye!\n';
       } else {
         self.databaseJson.ducks[user].penaltyTimeOut = new Date().setDate(new Date().getDate() + 1);
-        commandTextDirect = 'Your ammo has been *revoked* for *24 hours* ... see ya again after ';
+        commandTextDirect += 'Your ammo has been *revoked* for *24 hours* ... see ya again after ';
         commandTextDirect += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
         commandTextDirect += '\n';
       }
