@@ -641,9 +641,6 @@ class Sedbot {
     if (messageData.type === 'user_change') {
       console.log('Got a user change event: ' + messageData.user.id);
       self.onRTMUserChange(messageData, wsc);
-    } else if (messageData.type === 'im_open') {
-      console.log('user: ' + messageData.user + ' channel: ' + messageData.channel);
-      self.imMap[messageData.user] = messageData.channel;
     } else if (messageData.type === 'error') {
       console.error(JSON.stringify(messageData));
     } else if (messageData.type !== 'message') {
