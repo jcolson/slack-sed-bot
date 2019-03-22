@@ -77,6 +77,7 @@ class Sedbot {
     commandText += '`.fra [any text]`\t\t- France Patriotic Text\n';
     commandText += '`.ire [any text]`\t\t- Ireland Patriotic Text\n';
     commandText += '`.wal [any text]`\t\t- Wales Patriotic Text\n';
+    commandText += '`.uk [any text]`\t\t- UK Patriotic Text\n';
     commandText += '`.wtr [location]?[m/u]`- Retrieve the current weather for [location]. [m] == metric, [u] == USCS\n';
     commandText += '`.ducks [username]`\t- How many ducks have you/username befriended or harvested?\n';
     commandText += '`.bang`\t\t\t\t\t\t\t- Harvest a duck!\n';
@@ -524,7 +525,7 @@ class Sedbot {
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', '8', 'DUCKS', 'DUCK', 'BANG', 'BEF'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', 'UK', '8', 'DUCKS', 'DUCK', 'BANG', 'BEF'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -565,6 +566,8 @@ class Sedbot {
           self.onCommandColoredText(messageData.channel, parameters, wsc, ['green', 'white', 'orange']);
         } else if (commandMatch === 'WAL') {
           self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
+        } else if (commandMatch === 'UK') {
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['blue', 'red', 'white']);
         } else if (commandMatch === '8') {
           self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
         } else if (commandMatch === 'DUCKS' || commandMatch === 'DUCK') {
