@@ -74,6 +74,7 @@ class Sedbot {
     commandText += '`.about`\t\t\t\t\t\t- Helpful information about bot\n';
     commandText += '`.ping`\t\t\t\t\t\t\t- Ping the bot\n';
     commandText += '`.usa [any text]`\t\t- USA Patriotic Text\n';
+    commandText += '`.ind [any text]`\t\t- India Patriotic Text\n';
     commandText += '`.fra [any text]`\t\t- France Patriotic Text\n';
     commandText += '`.ire [any text]`\t\t- Ireland Patriotic Text\n';
     commandText += '`.wal [any text]`\t\t- Wales Patriotic Text\n';
@@ -525,7 +526,7 @@ class Sedbot {
   }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'FRA', 'IRE', 'WAL', 'UK', '8', 'DUCKS', 'DUCK', 'BANG', 'BEF'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'IND', 'FRA', 'IRE', 'WAL', 'UK', '8', 'DUCKS', 'DUCK', 'BANG', 'BEF'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
     let commandMatch = null;
     let parameters = null;
@@ -560,14 +561,16 @@ class Sedbot {
           self.onCommandWeather(messageData.channel, parameters, wsc);
         } else if (commandMatch === 'USA') {
           self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'white', 'blue']);
+        } else if (commandMatch === 'IND') {
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#FF9933', 'white', '#138808']);
         } else if (commandMatch === 'FRA') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['blue', 'white', 'red']);
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#0055A4', 'white', '#EF4135']);
         } else if (commandMatch === 'IRE') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['green', 'white', 'orange']);
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#169B62', 'white', '#FF883E']);
         } else if (commandMatch === 'WAL') {
           self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
         } else if (commandMatch === 'UK') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['blue', 'red', 'white']);
+          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#012169', '#C8102E', 'white']);
         } else if (commandMatch === '8') {
           self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
         } else if (commandMatch === 'DUCKS' || commandMatch === 'DUCK') {
