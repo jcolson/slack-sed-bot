@@ -691,25 +691,30 @@ class Sedbot {
       await self.persistDB();
       process.exit();
     });
-    https.get('https://slack.com/api/rtm.start?token=' + self.config.token + '&simple_latest=true&no_unreads=true', function(res) {
-      let body = '';
-      res.on('data', function(data) {
-        body += data.toString();
-      });
-      res.on('end', function() {
-        let data = JSON.parse(body);
-        if (!data.ok) {
-          console.log('Slack API returned the following error: ' + data.error);
-          process.exit(1);
-        }
-        self.mapUsers(data.users);
-        let wsUrl = data.url;
-        let wsc = new Ws(wsUrl);
-        wsc.on('message', function(message) {
-          self.onRTMMessage(message, wsc);
+    try {
+      https.get('https://slack.com/api/rtm.start?token=' + self.config.token + '&simple_latest=true&no_unreads=true', function(res) {
+        let body = '';
+        res.on('data', function(data) {
+          body += data.toString();
+        });
+        res.on('end', function() {
+          let data = JSON.parse(body);
+          if (!data.ok) {
+            console.log('Slack API returned the following error: ' + data.error);
+            process.exit(1);
+          }
+          self.mapUsers(data.users);
+          let wsUrl = data.url;
+          let wsc = new Ws(wsUrl);
+          wsc.on('message', function(message) {
+            self.onRTMMessage(message, wsc);
+          });
         });
       });
-    });
+    } catch (e) {
+      console.error('caught something very bad ...', e);
+      process.exit(1);
+    }
   }
 }
 exports.Sedbot = Sedbot;
