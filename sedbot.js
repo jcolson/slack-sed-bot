@@ -107,20 +107,26 @@ class Sedbot {
     if (self.duckIsLoose) {
       commandText += '*There is a duck currently flying around loose!!!*\n';
     }
+    let otherUser = user;
     if (parameters) {
-      user = parameters.substring(2, parameters.length - 1);
-      console.log('Getting duck status for specific user: ' + user);
+      otherUser = parameters.substring(0, 2) === '<@' ? parameters.substring(2, parameters.length - 1) : parameters;
+      console.log('Getting duck status for specific user: ' + otherUser);
     }
-    if (!self.userMap[user]) {
-      commandText += 'Looked for that user, but had no luck finding his/her duck count!';
+    if (!self.userMap[otherUser]) {
+      commandText += 'Looked for user, ' + otherUser + ', but had no luck finding user information!';
     } else {
-      if (!self.databaseJson.ducks[user]) {
-        self.initializeDucksForUser(user);
+      if (!self.databaseJson.ducks[otherUser]) {
+        self.initializeDucksForUser(otherUser);
       }
       // console.log(JSON.stringify(self.databaseJson));
-      commandText += '*' + self.userMap[user].real_name + '* has harvested *' + self.databaseJson.ducks[user].killed + '* and befriended *' + self.databaseJson.ducks[user].friend + '* ducks\n';
+      commandText += '*' + self.userMap[otherUser].real_name
+      + '* has harvested *' + self.databaseJson.ducks[otherUser].killed
+      + '* and befriended *' + self.databaseJson.ducks[otherUser].friend
+      + '* ducks\n';
       if (!parameters) {
         commandText += self.findTop5Ducks();
+      } else {
+        commandText += self.findTopDucks();
       }
     }
     self.respondIm(user, commandText, wsc);
@@ -233,6 +239,26 @@ class Sedbot {
           commandText += ' -> *' + sortedData.value.friend;
           commandText += '* /// ';
         }
+      });
+    return commandText;
+  }
+  findTopDucks() {
+    const self = this;
+    let commandText = '*Harvest Leaderboard*\n';
+    Object.keys(self.databaseJson.ducks).map(key => ({ key: key, value: self.databaseJson.ducks[key] }))
+      .sort((first, second) => (first.value.killed < second.value.killed) ? 1 : (first.value.killed > second.value.killed) ? -1 : 0)
+      .forEach((sortedData) => {
+        commandText += self.userMap[sortedData.key].real_name;
+        commandText += ' -> *' + sortedData.value.killed;
+        commandText += '* \n ';
+      });
+    commandText += '\n*Friend Leaderboard*\n';
+    Object.keys(self.databaseJson.ducks).map(key => ({ key: key, value: self.databaseJson.ducks[key] }))
+      .sort((first, second) => (first.value.friend < second.value.friend) ? 1 : (first.value.friend > second.value.friend) ? -1 : 0)
+      .forEach((sortedData) => {
+        commandText += self.userMap[sortedData.key].real_name;
+        commandText += ' -> *' + sortedData.value.friend;
+        commandText += '* \n ';
       });
     return commandText;
   }
