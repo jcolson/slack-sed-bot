@@ -578,36 +578,52 @@ class Sedbot {
         parameters = messageData.text.substring(substringTo + 1);
       }
       if (commandMatch !== null) {
-        if (commandMatch === 'HELP') {
-          self.onCommandHelp(messageData.user, parameters, wsc);
-        } else if (commandMatch === 'PING') {
-          self.onCommandPing(messageData.user, parameters, wsc);
-        } else if (commandMatch === 'ABOUT') {
-          self.onCommandAbout(messageData.user, parameters, wsc);
-        } else if (commandMatch === 'WTR') {
-          self.onCommandWeather(messageData.channel, parameters, wsc);
-        } else if (commandMatch === 'USA') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'white', 'blue']);
-        } else if (commandMatch === 'IND') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#FF9933', 'white', '#138808']);
-        } else if (commandMatch === 'FRA') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#0055A4', 'white', '#EF4135']);
-        } else if (commandMatch === 'IRE') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#169B62', 'white', '#FF883E']);
-        } else if (commandMatch === 'ITA') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#009246', '#fff', '#ce2b37']);
-        } else if (commandMatch === 'WAL') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
-        } else if (commandMatch === 'UK') {
-          self.onCommandColoredText(messageData.channel, parameters, wsc, ['#012169', '#C8102E', 'white']);
-        } else if (commandMatch === '8') {
-          self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
-        } else if (commandMatch === 'DUCKS' || commandMatch === 'DUCK') {
-          self.onCommandDucks(messageData.user, parameters, wsc);
-        } else if (commandMatch === 'BANG') {
-          self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
-        } else if (commandMatch === 'BEF') {
-          self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, false);
+        switch (commandMatch) {
+          case 'HELP':
+            self.onCommandHelp(messageData.user, parameters, wsc);
+            break;
+          case 'PING':
+            self.onCommandPing(messageData.user, parameters, wsc);
+            break;
+          case 'ABOUT':
+            self.onCommandAbout(messageData.user, parameters, wsc);
+            break;
+          case 'WTR':
+            self.onCommandWeather(messageData.channel, parameters, wsc);
+            break;
+          case 'USA':
+            self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'white', 'blue']);
+            break;
+          case 'IND':
+            self.onCommandColoredText(messageData.channel, parameters, wsc, ['#FF9933', 'white', '#138808']);
+            break;
+          case 'FRA':
+            self.onCommandColoredText(messageData.channel, parameters, wsc, ['#0055A4', 'white', '#EF4135']);
+            break;
+          case 'IRE':
+            self.onCommandColoredText(messageData.channel, parameters, wsc, ['#169B62', 'white', '#FF883E']);
+            break;
+          case 'ITA':
+            self.onCommandColoredText(messageData.channel, parameters, wsc, ['#009246', '#fff', '#ce2b37']);
+            break;
+          case 'WAL':
+            self.onCommandColoredText(messageData.channel, parameters, wsc, ['red', 'green', 'white']);
+            break;
+          case 'UK':
+            self.onCommandColoredText(messageData.channel, parameters, wsc, ['#012169', '#C8102E', 'white']);
+            break;
+          case '8':
+            self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
+            break;
+          case 'DUCKS':
+            self.onCommandDucks(messageData.user, parameters, wsc);
+            break;
+          case 'BANG':
+            self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
+            break;
+          case 'BEF':
+            self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, false);
+            break;
         }
       }
     }
