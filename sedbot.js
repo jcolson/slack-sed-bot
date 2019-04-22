@@ -51,8 +51,8 @@ class Sedbot {
       self.databaseJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, _DATABASE), 'utf8'));
     } catch (e) {
       console.error('Caught exception loading database, initializing.', e);
-      self.initializDB();
     }
+    self.initializDB();
     console.log('read database json');
   }
   mapUsers(users) {
@@ -85,6 +85,8 @@ class Sedbot {
     commandText += '`.bang`\t\t\t\t\t\t\t- Harvest a duck!\n';
     commandText += '`.bef`\t\t\t\t\t\t\t\t- Befriend a duck ...\n';
     commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
+    commandText += '`.q [name] [n]`\t\t\t- queue my request (or update existing) for a resource, name is name of job, n is approx duration resource is needed in hours\n';
+    commandText += '`.ql`\t\t\t\t\t\t\t\t-  list queued jobs and resources\n';
     self.respondIm(user, commandText, wsc);
     return commandText;
   }
@@ -268,6 +270,10 @@ class Sedbot {
     if (!self.databaseJson.ducks) {
       console.log('populating empty ducks for first time');
       self.databaseJson.ducks = {};
+    }
+    if (!self.databaseJson.queue) {
+      console.log('populating empty queue for first time');
+      self.databaseJson.queue = {};
     }
   }
   initializeDucksForUser(user) {
@@ -551,11 +557,89 @@ class Sedbot {
       console.error('received error: ' + e.message);
     });
   }
+  initializeQueueForChannel(channel) {
+    const self = this;
+    if (!self.databaseJson.queue[channel]) {
+      self.databaseJson.queue[channel] = {};
+      self.databaseJson.queue[channel]['resources'] = [];
+      self.databaseJson.queue[channel]['queue'] = [];
+      console.log(JSON.stringify(self.databaseJson));
+    }
+  }
+  onCommandQueue(user, channel, parameters, wsc) {
+    const self = this;
+    self.initializeQueueForChannel(channel);
+    let response;
+    if (parameters) {
+      parameters = parameters.split(' ');
+      if (parameters.length === 2 && !isNaN(parameters[1])) {
+        self.queueJob(user, channel, parameters[0], parameters[1]);
+        response = 'Queued your request';
+      }
+    }
+    if (!response) {
+      response = 'Must pass proper parameters, see help';
+    }
+    self.respond(channel, response, wsc);
+  }
+  queueJob(user, channel, name, duration) {
+    const self = this;
+    let foundresource = false;
+    let resources = self.databaseJson.queue[channel]['resources'];
+    for (let i = 0; i < resources.length; i++) {
+      console.log('resource: ' + resources[i]);
+      if (!resources[i].job) {
+        foundresource = true;
+      }
+    }
+    if (!foundresource) {
+      let queue = self.databaseJson.queue[channel]['queue'];
+      let queueItem = {[user]: {job: name, duration: duration}};
+      queue.push(queueItem);
+    }
+  }
+  onCommandQueueList(user, channel, parameters, wsc) {
+    const self = this;
+    self.initializeQueueForChannel(channel);
+    let response = 'Queue List:\n';
+    let resourceArray = self.databaseJson.queue[channel]['resources'];
+    for (let resource of resourceArray) {
+      response += 'Resource: ' + resource + '\n';
+    }
+    let queueArray = self.databaseJson.queue[channel]['queue'];
+    for (let queue of queueArray) {
+      let user = Object.keys(queue)[0];
+      response += 'Queued for user: ' + user + ' job name: ' + queue[user].job + '\n';
+    }
+    self.respond(channel, response, wsc);
+  }
+  onCommandQueueResourceAdd(user, channel, parameters, wsc) {
+    const self = this;
+    self.initializeQueueForChannel(channel);
+    let response = 'Added resource';
+    if (parameters.includes(' ')) {
+      response = 'Resource name can not include spaces';
+    } else {
+      this.queueResourceAdd(channel, parameters);
+    }
+    self.respond(channel, response, wsc);
+  }
+  queueResourceAdd(channel, resource) {
+    const self = this;
+    let resourceArray = self.databaseJson.queue[channel]['resources'];
+    resourceArray.push({[resource]: {}});
+    self.promoteQueue();
+  }
+  /**
+   * check to see if jobs can be promoted to a resource from the queue
+   */
+  promoteQueue() {
+
+  }
   handleCommands(messageData, wsc) {
     const self = this;
-    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'IND', 'FRA', 'IRE', 'ITA', 'WAL', 'UK', '8', 'DUCKS', 'DUCK', 'BANG', 'BEF'];
+    let commands = ['HELP', 'PING', 'ABOUT', 'WTR', 'USA', 'IND', 'FRA', 'IRE', 'ITA', 'WAL', 'UK', '8', 'DUCKS', 'DUCK', 'BANG', 'BEF', 'QL', 'Q', 'QRA'];
     let sedId = '<@' + this.userMapByName['sed'].id + '> ';
-    let commandMatch = null;
     let parameters = null;
     let substringFrom = -1;
     if (messageData.text.startsWith(sedId)) {
@@ -574,11 +658,8 @@ class Sedbot {
       }
       let possibleCommand = messageData.text.substring(substringFrom, substringTo).toUpperCase();
       if (commands.includes(possibleCommand)) {
-        commandMatch = possibleCommand;
         parameters = messageData.text.substring(substringTo + 1);
-      }
-      if (commandMatch !== null) {
-        switch (commandMatch) {
+        switch (possibleCommand) {
           case 'HELP':
             self.onCommandHelp(messageData.user, parameters, wsc);
             break;
@@ -623,6 +704,15 @@ class Sedbot {
             break;
           case 'BEF':
             self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, false);
+            break;
+          case 'QL':
+            self.onCommandQueueList(messageData.user, messageData.channel, parameters, wsc);
+            break;
+          case 'Q':
+            self.onCommandQueue(messageData.user, messageData.channel, parameters, wsc);
+            break;
+          case 'QRA':
+            self.onCommandQueueResourceAdd(messageData.user, messageData.channel, parameters, wsc);
             break;
         }
       }
