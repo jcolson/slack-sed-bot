@@ -200,7 +200,7 @@ class Sedbot {
         if (Math.floor((Math.random() * 100)) > 50) {
           flapText = '\_O< QUACK QUACK!';
         }
-        let commandText = '・゜゜・。。・゜゜' + flapText + ' /// *.bef* (riend) it or *.bang* (harvest) it!\n';
+        let commandText = '・゜゜・。。・゜゜' + flapText + ' • *.bef* (riend) it or *.bang* (harvest) it!\n';
         let injectLocation;
         for (let i = 0; i < (commandText.length / 5); i++) {
           injectLocation = Math.floor((Math.random() * (commandText.length - 1)));
