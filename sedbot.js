@@ -85,8 +85,9 @@ class Sedbot {
     commandText += '`.bang`\t\t\t\t\t\t\t- Harvest a duck!\n';
     commandText += '`.bef`\t\t\t\t\t\t\t\t- Befriend a duck ...\n';
     commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
-    commandText += '`.q [name] [n]`\t\t\t- queue my request (or update existing) for a resource, name is name of job, n is approx duration resource is needed in hours\n';
-    commandText += '`.ql`\t\t\t\t\t\t\t\t-  list queued jobs and resources\n';
+    commandText += '`.q [name] [n]`\t\t\t- Queue my request (or update existing) for a resource, name is name of job, n is approx duration resource is needed in hours\n';
+    commandText += '`.ql`\t\t\t\t\t\t\t\t- List queued jobs and resources\n';
+    commandText += '`.qra`\t\t\t\t\t\t\t- Add a resource to queue manager\n';
     self.respondIm(user, commandText, wsc);
     return commandText;
   }
@@ -604,12 +605,13 @@ class Sedbot {
     let response = 'Queue List:\n';
     let resourceArray = self.databaseJson.queue[channel]['resources'];
     for (let resource of resourceArray) {
-      response += 'Resource: ' + resource + '\n';
+      let resourceName = Object.keys(resource)[0];
+      response += 'Resource: ' + resourceName + '\n';
     }
     let queueArray = self.databaseJson.queue[channel]['queue'];
     for (let queue of queueArray) {
       let user = Object.keys(queue)[0];
-      response += 'Queued for user: ' + user + ' job name: ' + queue[user].job + '\n';
+      response += 'Queued for user: ' + self.userMap[user].real_name + ' • job name: ' + queue[user].job + ' • duration: ' + queue[user].duration + '\n';
     }
     self.respond(channel, response, wsc);
   }
@@ -619,8 +621,10 @@ class Sedbot {
     let response = 'Added resource';
     if (parameters.includes(' ')) {
       response = 'Resource name can not include spaces';
-    } else {
+    } else if (parameters) {
       this.queueResourceAdd(channel, parameters);
+    } else {
+      response = 'Must pass a resource name';
     }
     self.respond(channel, response, wsc);
   }
