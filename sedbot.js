@@ -585,33 +585,26 @@ class Sedbot {
   }
   queueJob(user, channel, name, duration) {
     const self = this;
-    let foundresource = false;
-    let resources = self.databaseJson.queue[channel]['resources'];
-    for (let i = 0; i < resources.length; i++) {
-      console.log('resource: ' + resources[i]);
-      if (!resources[i].job) {
-        foundresource = true;
-      }
-    }
-    if (!foundresource) {
-      let queue = self.databaseJson.queue[channel]['queue'];
-      let queueItem = {[user]: {job: name, duration: duration}};
-      queue.push(queueItem);
-    }
+    let queue = self.databaseJson.queue[channel]['queue'];
+    let queueItem = {[user]: {job: name, duration: duration}};
+    queue.push(queueItem);
   }
   onCommandQueueList(user, channel, parameters, wsc) {
     const self = this;
     self.initializeQueueForChannel(channel);
-    let response = 'Queue List:\n';
+    let response = 'Resources:\n';
     let resourceArray = self.databaseJson.queue[channel]['resources'];
     for (let resource of resourceArray) {
       let resourceName = Object.keys(resource)[0];
-      response += 'Resource: ' + resourceName + '\n';
+      response += resourceName + ' -> ' + resource[resourceName].user + ' -> ' + resource[resourceName].duration + '\n';
     }
+    response += 'Queued:\n';
     let queueArray = self.databaseJson.queue[channel]['queue'];
     for (let queue of queueArray) {
-      let user = Object.keys(queue)[0];
-      response += 'Queued for user: ' + self.userMap[user].real_name + ' • job name: ' + queue[user].job + ' • duration: ' + queue[user].duration + '\n';
+      let users = Object.keys(queue);
+      for (let user of users) {
+        response += self.userMap[user].real_name + ' • job name: ' + queue[user].job + ' • duration: ' + queue[user].duration + '\n';
+      }
     }
     self.respond(channel, response, wsc);
   }
