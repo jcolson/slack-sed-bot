@@ -228,7 +228,7 @@ class Sedbot {
           userCount++;
           commandText += self.userMap[sortedData.key].real_name;
           commandText += ' -> *' + sortedData.value.killed;
-          commandText += '* /// ';
+          commandText += '* • ';
         }
       });
     commandText += '\n*Friend Leaderboard*\n';
@@ -240,7 +240,7 @@ class Sedbot {
           userCount++;
           commandText += self.userMap[sortedData.key].real_name;
           commandText += ' -> *' + sortedData.value.friend;
-          commandText += '* /// ';
+          commandText += '* • ';
         }
       });
     return commandText;
