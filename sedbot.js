@@ -85,9 +85,9 @@ class Sedbot {
     commandText += '`.bang`\t\t\t\t\t\t\t- Harvest a duck!\n';
     commandText += '`.bef`\t\t\t\t\t\t\t\t- Befriend a duck ...\n';
     commandText += '`.8 [important question]`- Ask the Magic 8 Ball an important question\n';
-    commandText += '`.q [name] [n]`\t\t\t- Queue my request (or update existing) for a resource, name is name of job, n is approx duration resource is needed in hours\n';
-    commandText += '`.ql`\t\t\t\t\t\t\t\t- List queued jobs and resources\n';
-    commandText += '`.qra`\t\t\t\t\t\t\t- Add a resource to queue manager\n';
+    // commandText += '`.q [name] [n]`\t\t\t- Queue my request (or update existing) for a resource, name is name of job, n is approx duration resource is needed in hours\n';
+    // commandText += '`.ql`\t\t\t\t\t\t\t\t- List queued jobs and resources\n';
+    // commandText += '`.qra`\t\t\t\t\t\t\t- Add a resource to queue manager\n';
     self.respondIm(user, commandText, wsc);
     return commandText;
   }
@@ -105,7 +105,7 @@ class Sedbot {
     commandText += 'Load: ' + os.loadavg()[0].toFixed(2) + ' / ' + os.loadavg()[1].toFixed(2) + ' / ' + os.loadavg()[2].toFixed(2) + '\n';
     self.respondIm(user, commandText, wsc);
   }
-  onCommandDucks(user, parameters, wsc) {
+  onCommandDucks(user, channel, parameters, wsc) {
     const self = this;
     let commandText = '';
     if (self.duckIsLoose) {
@@ -133,7 +133,7 @@ class Sedbot {
         commandText += self.findTopDucks();
       }
     }
-    self.respondIm(user, commandText, wsc);
+    self.respond(channel, commandText, wsc);
   }
   async onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
     const self = this;
@@ -148,16 +148,25 @@ class Sedbot {
       commandTextDirect += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
       commandTextDirect += '\n';
     } else if (self.duckIsLoose) {
-      if (shot) self.databaseJson.ducks[user].killed++;
-      else self.databaseJson.ducks[user].friend++;
-      commandText = self.userMap[user].real_name + ' just ' + (shot ? 'shot' : 'befriended')
+      let randomCheck = Math.floor((Math.random() * 100));
+      if (randomCheck > this.config.duckaccuracy) {
+        if (shot) {
+          commandText = self.userMap[user].real_name + ' just missed the duck by a mile ... try again!';
+        } else {
+          commandText = self.userMap[user].real_name + ', who knew ducks could be so choosey?  Maybe (s)he\'ll friend you next time!';
+        }
+      } else {
+        if (shot) self.databaseJson.ducks[user].killed++;
+        else self.databaseJson.ducks[user].friend++;
+        commandText = self.userMap[user].real_name + ' just ' + (shot ? 'shot' : 'befriended')
         + ' a duck!  Your total ducks: *'
         + (shot ? self.databaseJson.ducks[user].killed : self.databaseJson.ducks[user].friend)
         + '*\n';
-      self.duckIsLoose = false;
-      self.lastDuckUser = user;
-      self.lastDuckChannel = await self.getChannelName(channel);
-      self.lastDuckTime = new Date();
+        self.duckIsLoose = false;
+        self.lastDuckUser = user;
+        self.lastDuckChannel = await self.getChannelName(channel);
+        self.lastDuckTime = new Date();
+      }
     } else {
       commandTextDirect = self.userMap[user].real_name
         + ', there is no duck ... what are you '
@@ -694,7 +703,7 @@ class Sedbot {
             self.onCommand8Ball(messageData.user, messageData.channel, parameters, wsc);
             break;
           case 'DUCKS':
-            self.onCommandDucks(messageData.user, parameters, wsc);
+            self.onCommandDucks(messageData.user, messageData.channel, parameters, wsc);
             break;
           case 'BANG':
             self.onCommandDuckBangFriend(messageData.user, messageData.channel, parameters, wsc, true);
