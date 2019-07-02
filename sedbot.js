@@ -137,28 +137,28 @@ class Sedbot {
   }
   async onCommandDuckBangFriend(user, channel, parameters, wsc, shot) {
     const self = this;
-    let commandText;
-    let commandTextDirect;
+    let commandText = '';
+    let commandTextDirect = '';
     let eject = false;
     if (!self.databaseJson.ducks[user]) {
       self.initializeDucksForUser(user);
     }
     if (self.databaseJson.ducks[user].penaltyTimeOut && self.databaseJson.ducks[user].penaltyTimeOut > new Date().getTime()) {
-      commandTextDirect = 'Your ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
-      commandTextDirect += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
-      commandTextDirect += '\n';
+      commandText += 'Your ammo had been *revoked* for *24 hours* due to your previous mishap ... see ya again after ';
+      commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
+      commandText += '\n';
     } else if (self.duckIsLoose) {
       let randomCheck = Math.floor((Math.random() * 100));
       if (randomCheck > this.config.duckaccuracy) {
         if (shot) {
-          commandText = self.userMap[user].real_name + ' just missed the duck by a mile ... try again!';
+          commandText += self.userMap[user].real_name + ' just missed the duck by a mile ... try again!';
         } else {
-          commandText = self.userMap[user].real_name + ', who knew ducks could be so choosey?  Maybe (s)he\'ll friend you next time!';
+          commandText += self.userMap[user].real_name + ', who knew ducks could be so choosey?  Maybe (s)he\'ll friend you next time!';
         }
       } else {
         if (shot) self.databaseJson.ducks[user].killed++;
         else self.databaseJson.ducks[user].friend++;
-        commandText = self.userMap[user].real_name + ' just ' + (shot ? 'shot' : 'befriended')
+        commandText += self.userMap[user].real_name + ' just ' + (shot ? 'shot' : 'befriended')
         + ' a duck!  Your total ducks: *'
         + (shot ? self.databaseJson.ducks[user].killed : self.databaseJson.ducks[user].friend)
         + '*\n';
@@ -168,7 +168,7 @@ class Sedbot {
         self.lastDuckTime = new Date();
       }
     } else {
-      commandTextDirect = self.userMap[user].real_name
+      commandText += self.userMap[user].real_name
         + ', there is no duck ... what are you '
         + (shot ? 'shooting at' : 'trying to friend')
         + ' there Elmer Fud??\n*'
@@ -182,12 +182,12 @@ class Sedbot {
         + '\n';
       eject = (self.config.noeject ? !self.config.noeject.includes(channel) : true) && !await self.isChannelPrivate(channel) && !await self.isChannelGeneral(channel);
       if (eject) {
-        commandTextDirect += 'Your penalty is channel ejection!  Buh-bye!\n';
+        commandText += 'Your penalty is channel ejection!  Buh-bye!\n';
       } else {
         self.databaseJson.ducks[user].penaltyTimeOut = new Date().setDate(new Date().getDate() + 1);
-        commandTextDirect += 'Your ammo has been *revoked* for *24 hours* ... see ya again after ';
-        commandTextDirect += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
-        commandTextDirect += '\n';
+        commandText += 'Your ammo has been *revoked* for *24 hours* ... see ya again after ';
+        commandText += new Date(self.databaseJson.ducks[user].penaltyTimeOut);
+        commandText += '\n';
       }
     }
     if (commandText) {
