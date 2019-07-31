@@ -364,7 +364,13 @@ class Sedbot {
       channel: channel,
       text: commandText,
     };
-    wsc.send(JSON.stringify(sendCommandData));
+    try {
+      wsc.send(JSON.stringify(sendCommandData));
+    } catch (e) {
+    // exit process and let systemd restart
+      console.error(e);
+      process.exit(1);
+    }
   }
   openIm(user) {
     let self = this;
@@ -397,8 +403,13 @@ class Sedbot {
       text: commandText,
       channel_type: 'im',
     };
-    wsc.send(JSON.stringify(sendCommandData));
-
+    try {
+      wsc.send(JSON.stringify(sendCommandData));
+    } catch (e) {
+      // exit process and let systemd restart
+      console.error(e);
+      process.exit(1);
+    }
   }
   upload(title, file, channel) {
     let self = this;
@@ -787,7 +798,7 @@ class Sedbot {
     var messageData = JSON.parse(message);
     if (messageData.type === 'user_change') {
       console.log('Got a user change event: ' + messageData.user.id);
-      self.onRTMUserChange(messageData, wsc);
+      self.onRTMUserChange(messageData);
     } else if (messageData.type === 'error') {
       console.error(JSON.stringify(messageData));
     } else if (messageData.type !== 'message') {
