@@ -204,17 +204,7 @@ class Sedbot {
       let randomCheck = Math.floor((Math.random() * 100));
       // console.log('randomCheck: ' + randomCheck);
       if (randomCheck < this.config.duckpercent) {
-        let randomChar = '​';
-        let flapText = '\_ø< FLA​P FLAP!';
-        if (Math.floor((Math.random() * 100)) > 50) {
-          flapText = '\_O< QUACK QUACK!';
-        }
-        let commandText = '・゜゜・。。・゜゜' + flapText + ' • *.bef* (riend) it or *.bang* (harvest) it!\n';
-        let injectLocation;
-        for (let i = 0; i < (commandText.length / 5); i++) {
-          injectLocation = Math.floor((Math.random() * (commandText.length - 1)));
-          commandText = commandText.slice(0, injectLocation) + randomChar + commandText.slice(injectLocation);
-        }
+        let commandText = this.getDuckFlightText();
         self.duckIsLoose = true;
         // console.log(self.config.duckchannels);
         let randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
@@ -225,7 +215,28 @@ class Sedbot {
       }
     } else {
       console.log('duck is already loose, no need to try and let one go');
+      let randomCheck = Math.floor((Math.random() * 100));
+      // console.log('randomCheck: ' + randomCheck);
+      if (randomCheck < this.config.duckpercent) {
+        let randomChannel = await self.retrieveRandomConversationChannel(self.userMapByName['sed'].id);
+        let commandText = this.getDuckFlightText();
+        self.respond(randomChannel, commandText, wsc);
+      }
     }
+  }
+  getDuckFlightText() {
+    let randomChar = '​';
+    let flapText = '\_ø< FLA​P FLAP!';
+    if (Math.floor((Math.random() * 100)) > 50) {
+      flapText = '\_O< QUACK QUACK!';
+    }
+    let commandText = '・゜゜・。。・゜゜' + flapText + ' • *.bef* (riend) it or *.bang* (harvest) it!\n';
+    let injectLocation;
+    for (let i = 0; i < (commandText.length / 5); i++) {
+      injectLocation = Math.floor((Math.random() * (commandText.length - 1)));
+      commandText = commandText.slice(0, injectLocation) + randomChar + commandText.slice(injectLocation);
+    }
+    return commandText;
   }
   findTop5Ducks() {
     const self = this;
@@ -801,6 +812,9 @@ class Sedbot {
       self.onRTMUserChange(messageData);
     } else if (messageData.type === 'error') {
       console.error(JSON.stringify(messageData));
+    } else if (messageData.type === 'goodbye') {
+      console.log('Got the "goodbye" event, shutting down for a restart');
+      process.exit();
     } else if (messageData.type !== 'message') {
       console.log('Got an event we\'re not processing: ' + messageData.type);
     } if (messageData.user && self.userMap[messageData.user] && self.userMap[messageData.user].is_bot) {
