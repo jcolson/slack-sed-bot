@@ -9,6 +9,7 @@ const DEFAULT_TOKEN = '[USE .env file for reading TOKEN]';
 const DEFAULT_DUCKPERCENT = 10;
 const DEFAULT_DUCKACCURACY = 10;
 const DEFAULT_KICKTOKEN = '[USE .env file for reading KICKTOKEN]';
+const DEFAULT_IGNORESENDERS = undefined;
 const DEFAULT_DUCKCHANNELS = undefined;
 const DEFAULT_DUCKCHANNELS_NOEJECT = undefined;
 
@@ -20,6 +21,7 @@ const opt = require('node-getopt').create([
   [ 'c', 'duckchannels=[chan1,chan2]',   'Channels in which ducks will be let loose (default: ' + DEFAULT_DUCKCHANNELS + ')' ],
   [ 'a', 'duckaccuracy={integer}',   'Accuracy of duck hunter has to be (default: ' + DEFAULT_DUCKACCURACY + ')' ],
   [ 'n', 'noeject=[chan1,chan2]',   'Channels in which will not eject you for missing (default: ' + DEFAULT_DUCKCHANNELS_NOEJECT + ')' ],
+  [ 'i', 'ignoreSenders=[user1,user2]',   'Users that sed will ignore (default: ' + DEFAULT_IGNORESENDERS + ')' ],
 ]).bindHelp().parseSystem();
 // load .env file
 dotenv.config({ path: path.resolve(__dirname, '.env') });
@@ -31,4 +33,5 @@ new sedbot.Sedbot({
   kicktoken: opt.options.kicktoken || process.env.KICKTOKEN || DEFAULT_KICKTOKEN,
   duckchannels: opt.options.duckchannels || (process.env.DUCKCHANNELS) ? process.env.DUCKCHANNELS.split(',') : '' || DEFAULT_DUCKCHANNELS,
   noeject: opt.options.noeject || (process.env.DUCKCHANNELS_NOEJECT) ? process.env.DUCKCHANNELS_NOEJECT.split(',') : '' || DEFAULT_DUCKCHANNELS_NOEJECT,
+  ignoreSenders: opt.options.ignoreSenders || (process.env.IGNORESENDERS) ? process.env.IGNORESENDERS.split(',') : '' || DEFAULT_IGNORESENDERS,
 }).listen();

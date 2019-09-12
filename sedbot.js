@@ -685,7 +685,9 @@ class Sedbot {
         substringTo = substringTo + substringFrom;
       }
       let possibleCommand = messageData.text.substring(substringFrom, substringTo).toUpperCase();
-      if (commands.includes(possibleCommand)) {
+      if (this.config.ignoreSenders.includes(messageData.user)) {
+        console.log('ignoring: ' + messageData.user);
+      } else if (commands.includes(possibleCommand)) {
         parameters = messageData.text.substring(substringTo + 1);
         switch (possibleCommand) {
           case 'HELP':
