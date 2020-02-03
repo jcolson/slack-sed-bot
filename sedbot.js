@@ -575,16 +575,20 @@ class Sedbot {
       // console.log('statusCode:', response.statusCode);
       // console.log('headers:', response.headers);
       let body = '';
-      response.on('data', (data) => {
-        body += data;
-      });
-      response.on('end', function() {
+      if (response.statusCode < 200 || response.statusCode > 299) {
+        body = 'Error encountered, try something other than ' + parameters;
+      } else {
+        response.on('data', (data) => {
+          body += data;
+        });
+        response.on('end', function() {
         // console.log(body);
-        if (body.indexOf('Error') !== -1) {
-          body = 'Error encountered, try a different location';
-        }
-        self.respond(channel, body, wsc);
-      });
+          if (body.indexOf('Error') !== -1) {
+            body = 'Error encountered, try something other than ' + parameters;
+          }
+        });
+      }
+      self.respond(channel, body, wsc);
     }).on('error', (e) => {
       console.error('received error: ' + e.message);
     });
