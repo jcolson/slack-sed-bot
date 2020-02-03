@@ -571,24 +571,25 @@ class Sedbot {
         'User-Agent': 'like curl',
       },
     };
+    let body = '';
     https.get(options, (response) => {
-      // console.log('statusCode:', response.statusCode);
+    //   console.log('statusCode:', response.statusCode);
       // console.log('headers:', response.headers);
-      let body = '';
       if (response.statusCode < 200 || response.statusCode > 299) {
         body = 'Error encountered, try something other than ' + parameters;
+        self.respond(channel, body, wsc);
       } else {
         response.on('data', (data) => {
           body += data;
         });
         response.on('end', function() {
-        // console.log(body);
+        //   console.log(body);
           if (body.indexOf('Error') !== -1) {
             body = 'Error encountered, try something other than ' + parameters;
           }
+          self.respond(channel, body, wsc);
         });
       }
-      self.respond(channel, body, wsc);
     }).on('error', (e) => {
       console.error('received error: ' + e.message);
     });
