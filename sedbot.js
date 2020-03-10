@@ -27,7 +27,7 @@ class Sedbot {
     this.keepHistory = 20;
     // 1 is delimiter; 2 is "search"; 3 is "replace", 4 are flags (or undefined).
     // var sedRegex = /(?:^|\s)s([^\w\s])(.+)\1(.+)\1([a-z])*/; // original
-    this.sedRegex = /(?:^|\s)s([^\w\s])([\-\(\)\*\[\]\s\w]+)\1([\-\(\)\*\[\]\s\w]+)\1?([\-\(\)\*\[\]\w]+)*/;
+    this.sedRegex = /(?:^|\s)s([^\w\s])([\"\'\-\(\)\*\[\]\s\w]+)\1([\"\'\-\(\)\*\[\]\s\w]+)\1?([\-\(\)\*\[\]\w]+)*/;
     this.userMap = {};
     this.userMapByName = {};
     this.imMap = {};
