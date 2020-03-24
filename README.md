@@ -1,3 +1,5 @@
+# Sedbot
+
 1. [Create a new Slack Bot integration](https://slack.com/services/new/bot)
 2. Run `npm install`
 3. Edit a local .env file to look like, review the `.env_example` for examples.
@@ -9,6 +11,31 @@ DUCKCHANNELS=CGYAH2963`
 5. Invite the bot to channels by mentioning it
 6. Use `s/search/replacement/` to order the bot to correct one of the previous 20 messages in the channel
 7. Use .HELP to see other commands available
+
+## Create docker image
+
+```sh
+docker build -t karmanet/slacksedbot .
+```
+
+## Run docker container
+
+```sh
+docker run --name slacksedbot -v ${CONFIGDIR}:/config --restart always -d karmanet/slacksedbot
+```
+
+Run interactively
+
+```sh
+docker run -v /Users/jcolson/src/opensource/slack-sed-bot:/config -it karmanet/slacksedbot sh
+```
+
+## Push docker image
+
+```sh
+docker login docker.io
+docker push karmanet/slacksedbot
+```
 
 ## Functionality
 

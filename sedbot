@@ -12,6 +12,7 @@ const DEFAULT_KICKTOKEN = '[USE .env file for reading KICKTOKEN]';
 const DEFAULT_IGNORESENDERS = undefined;
 const DEFAULT_DUCKCHANNELS = undefined;
 const DEFAULT_DUCKCHANNELS_NOEJECT = undefined;
+const DEFAULT_CONFIGDIR = __dirname;
 
 const opt = require('node-getopt').create([
   [ 'h', 'help',            'Show this help' ],
@@ -23,8 +24,11 @@ const opt = require('node-getopt').create([
   [ 'n', 'noeject=[chan1,chan2]',   'Channels in which will not eject you for missing (default: ' + DEFAULT_DUCKCHANNELS_NOEJECT + ')' ],
   [ 'i', 'ignoreSenders=[user1,user2]',   'Users that sed will ignore (default: ' + DEFAULT_IGNORESENDERS + ')' ],
 ]).bindHelp().parseSystem();
+
+let configDir = process.env.CONFIGDIR || DEFAULT_CONFIGDIR;
+
 // load .env file
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(configDir, '.env') });
 
 new sedbot.Sedbot({
   token: opt.options.token || process.env.TOKEN || DEFAULT_TOKEN,
@@ -34,4 +38,5 @@ new sedbot.Sedbot({
   duckchannels: opt.options.duckchannels || (process.env.DUCKCHANNELS) ? process.env.DUCKCHANNELS.split(',') : '' || DEFAULT_DUCKCHANNELS,
   noeject: opt.options.noeject || (process.env.DUCKCHANNELS_NOEJECT) ? process.env.DUCKCHANNELS_NOEJECT.split(',') : '' || DEFAULT_DUCKCHANNELS_NOEJECT,
   ignoreSenders: opt.options.ignoreSenders || (process.env.IGNORESENDERS) ? process.env.IGNORESENDERS.split(',') : '' || DEFAULT_IGNORESENDERS,
+  configDir,
 }).listen();

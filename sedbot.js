@@ -42,13 +42,13 @@ class Sedbot {
   }
   persistDB() {
     const self = this;
-    fs.writeFileSync(path.resolve(__dirname, _DATABASE), JSON.stringify(self.databaseJson), 'utf8');
+    fs.writeFileSync(path.resolve(this.config.configDir, _DATABASE), JSON.stringify(self.databaseJson), 'utf8');
     console.log('wrote database json');
   }
   readDB() {
     const self = this;
     try {
-      self.databaseJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, _DATABASE), 'utf8'));
+      self.databaseJson = JSON.parse(fs.readFileSync(path.resolve(this.config.configDir, _DATABASE), 'utf8'));
     } catch (e) {
       console.error('Caught exception loading database, initializing.', e);
     }
